@@ -15,33 +15,6 @@ for filename in os.listdir(path):
 	tree = ET.parse(fullname)
 	root = tree.getroot()
 	
-	#store trace strokes in list
-	'''traceList = []
-	for trace in root.findall('inkml:trace',ns):
-		traceIndex = int(trace.attrib['id'])
-		traceVals = trace.text.replace(',','').replace(' ',',')
-		traceValSplit = traceVals.split(',')
-		x=[]
-		y=[]
-		for i in range(0,len(traceValSplit)):
-			if i % 2 == 0:
-				x.append(int(traceValSplit[i]))
-			else:
-				y.append(int(traceValSplit[i]))
-		traceList.insert(traceIndex,[x, y])
-	print(traceList)'''
-	
-	
-	#parse traceGroups, one instance
-	'''for topTraceGroup in root.findall('inkml:traceGroup',ns):
-		for subTraceGroup in topTraceGroup.findall('inkml:traceGroup',ns):
-			subTraceGroupList = []
-			for traceStroke in subTraceGroup.findall('inkml:traceView',ns):
-				subTraceGroupList.append(int(traceStroke.attrib['traceDataRef']))
-			traceGroupList.append(subTraceGroupList)
-	print(traceGroupList)'''
-	
-	
 	#extract individual symbols
 	for topTraceGroup in root.findall('inkml:traceGroup',ns):
 		for subTraceGroup in topTraceGroup.findall('inkml:traceGroup',ns):
