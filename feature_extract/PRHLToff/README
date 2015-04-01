@@ -1,0 +1,29 @@
+=======================================
+Offline PRHLT features extraction
+=======================================
+
+- Compilation
+$ make
+
+Requirements:
+- libjpeg
+- libpng
+
+---------------------------------------
+
+Usage: ./featExtOffLine options
+      options:
+             -i inputfile      (by default stdin)
+             -o outputfile     (by default stdout)
+             -t transcription  (by default NULL)
+             -c numberOfCells  (by default 20)
+             -V <num:float>    overlapping vertical factor of cells (def. 2.0) 
+             -O <num:float>    overlapping horizontal factor (def. 2.0)
+             -F <num:float>    scaling factor of frecuency (def. 1.0)
+             -H                HTK output format (def. PRHLT format)
+             -v                verbosityLevel (by default 0)
+
+---------------------------------------
+
+- Example: offline features extraction of image "pi.pgm"
+$ ./featExtOffLine -i pi.pgm -o pi.fea

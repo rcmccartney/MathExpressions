@@ -1,0 +1,17 @@
+=======================================
+Offline features extraction
+=======================================
+
+- Compilation
+$ make
+
+---------------------------------------
+
+- Usage:
+$ ./fkifeat
+Usage: ./fkifeat img.pbm
+
+---------------------------------------
+
+- Example: offline features extraction of binary image "one.pbm"
+$ ./fkifeat one.pbm > one.fea

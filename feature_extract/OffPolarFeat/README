@@ -1,0 +1,26 @@
+=======================================
+Offline Polar features extraction
+=======================================
+
+- Compilation
+$ make
+
+---------------------------------------
+
+- Usage:
+$ ./offpolarfeat 
+Usage: ./offpolarfeat image.pgm rad dis ang [-vr]
+
+---------------------------------------
+
+- Example: features extraction using a shape descriptor of radius 20
+           with 3 distances and 8 angles
+
+$ ./offpolarfeat pi.pgm 20 3 8 > pi.fea
+
+- Example: features extraction using a shape descriptor of radius 20
+           with 3 distances, 8 angles and vertical repositioning
+
+$ ./offpolarfeat pi.pgm 20 3 8 -vr > pi.vr.fea
+
+  *Note that you might want to project each feature vector using PCA

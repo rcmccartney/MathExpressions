@@ -1,0 +1,62 @@
+=======================================
+Online (and hybrid) features extraction
+=======================================
+
+- Compilation
+$ make
+
+---------------------------------------
+
+- Usage:
+$ ./get_Hyb_Feat
+
+Usage: get_Hyb_Feat [-o] [-f #int] [-i file] [-v #int] [-w #int] [<file> (def. stdin)]
+
+  -f #   Specify the context window size for offline features
+         computation (def. 0 = no offline features)
+  -i out Save the rendered image in file 'out' (PGM)
+  -v #   Specify the height size for image renderization (def. 40)
+  -w #   Specify the max width size for image renderization (def. 200)
+  -o     Save output to disk (def. stdout).
+
+NOTE: input file must be in MOTOROLA format.
+
+Feature Vector Scheme:
+         < X Y Dx Dy Ax Ay K off(1x1) off(1x2) ... off(fxf) >
+
+   where:
+          X: normalized coord x
+          Y: normalized coord y
+         Dx: first normalized derivative of X
+         Dy: first normalized derivative of Y
+         Ax: second derivative of X
+         Ay: second derivative of Y
+          K: curvature
+   Off(fxf): sequence of the fxf context window centered
+             in (x,y) in offline representation
+
+---------------------------------------
+
+- Example: online features extraction of file "sample.ink"
+
+$ ./get_Hyb_Feat sample.ink > sample.fea
+
+---------------------------------------
+
+- Example: hybrid features extraction of file "sample.ink" using a
+  context-window o 5x5 pixels, and rendering   the image to height
+  20 pixels and maximum width 100 pixels.
+
+$ ./get_Hyb_Feat -f 5 -v 20 -w 100 sample.ink > sample.ink.hybrid.fea
+
+  *Note that you might want reduce the w x w offline features using PCA!
+
+---------------------------------------
+
+- Example: obtain the rendered image of the online sample (height 40px
+  and maximum width 200px)
+
+$ ./get_Hyb_Feat -v 40 -w 200 sample.ink -i sample.pgm > sample.fea
+
+  *Note that an offset of 2 pixels is used (it can be changed in file
+   offline.cc).

@@ -1,0 +1,26 @@
+=======================================
+Offline features extraction
+=======================================
+
+- Compilation
+$ make
+
+---------------------------------------
+
+- Usage:
+$ ./rwthfeat 
+Usage: ./rwthfeat img.pgm w_size [-vr]
+
+---------------------------------------
+
+- Example: offline features extraction using a sliding window of width
+           5 pixels   
+
+$ ./rwthfeat pi.pgm 5 > pi.fea
+
+- Example: offline features extraction using a sliding window of width
+           5 pixels with vertical repositioning
+
+$ ./rwthfeat pi.pgm 5 -vr > pi.vr.fea
+
+  *Note that you might want to project each window using PCA!
