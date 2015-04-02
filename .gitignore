@@ -5,6 +5,9 @@ ehthumbs.db
 # pycharm fun
 .idea/
 
+# compiled python
+__pycache__/
+
 # Folder config file
 Desktop.ini
 
