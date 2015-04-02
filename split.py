@@ -10,10 +10,11 @@ class Split():
     iterations = 100
     k = 20
 
-    def __init__(self, inkmllist):
+    def __init__(self, inkmllist, num_classes):
 
         self.train = []
         self.test = []
+        self.num_classes = num_classes
 
         # make a purely random split
         for item in inkmllist:
@@ -53,6 +54,12 @@ class Split():
         print("Testing distribution")
         print_distr(self.test)
 
+    def calc_distr(self, inkmllist):
+        distr = [0]*self.num_classes
+        for eqn in inkmllist:
+            for symbol in eqn.symbolList:
+                pass
+
     @staticmethod
     def update_distr(pk, qk, train_to_swap, test_to_swaps):
-
+        pass
