@@ -10,7 +10,7 @@ class Trace():
     def __init__(self, id, point_list):
         self.id = id
         xy = point_list.split(',')
-        xy = list(map(int, xy))
+        xy = list(map(float, xy))
         self.x = xy[::2]
         self.y = xy[1::2]
 
@@ -71,8 +71,8 @@ class Parser():
                 annotation = subTraceGroup.find('inkml:annotation', ns).text
                 #get tracelist for symbol
                 traceviewlisttemp = []
-                for traceView in subTraceGroup.findall('inkml:traceView', ns):
-                    id = int(traceView.attrib['traceDataRef'])
+                for traceview in subTraceGroup.findall('inkml:traceView', ns):
+                    id = int(traceview.attrib['traceDataRef'])
                     traceviewlisttemp.append(id)
                 tracelist = [tracelisttemp[k] for k in traceviewlisttemp]  # trace subset for symbol
                 # find what index this symbol corresponds to
@@ -134,7 +134,8 @@ def main():
         print_usage()
 
     p.print_results()
-    #s = Split(p.parsed_inkml, len(p.grammar))
+    s = Split(p.parsed_inkml, len(p.grammar))
+    s.optimize_cosine()
 
 if __name__ == '__main__':
     main()
