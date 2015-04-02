@@ -61,14 +61,14 @@ def parse(filelist):
         inkmlFileList.append(InkmlFile(label, symbolList))
 
     for file in inkmlFileList:
-        print(file.label)
+        print("file:", file.label)
         for symbol in file.symbolList:
-            print('\t' + symbol.label)
+            print('\t', "symbol:", symbol.label)
             for trace in symbol.traceList:
-                print('\t\t' + str(trace.id))
+                print('\t\t', "trace:", str(trace.id))
                 print(trace.x)
                 print(trace.y)
-        print('')
+        print()
 
 
 def print_usage():
