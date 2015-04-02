@@ -52,8 +52,10 @@ def parse(grammar, filelist):
                 id = int(traceView.attrib['traceDataRef'])
                 traceViewListTemp.append(id)
             traceList = [traceListTemp[k] for k in traceViewListTemp]  # trace subset for symbol
-
-            symbolList.append(Symbol(annotation, traceList))
+            # find what index this symbol corresponds to
+            assert annotation in grammar, "Error: " + annotation + " is not defined in the grammar"
+            label_index = grammar[annotation]
+            symbolList.append(Symbol(annotation, label_index, traceList))
 
         #generate class for equation
         for annotation in root.findall('inkml:annotation', ns):
@@ -64,7 +66,7 @@ def parse(grammar, filelist):
     for file in inkmlFileList:
         print("file:", file.label)
         for symbol in file.symbolList:
-            print('\t', "symbol:", symbol.label)
+            print('\t', "symbol:", symbol.label, "index:", symbol.label_index)
             for trace in symbol.traceList:
                 print('\t\t', "trace:", str(trace.id))
                 print(trace.x)
