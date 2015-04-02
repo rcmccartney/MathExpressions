@@ -12,8 +12,9 @@ class Trace():
 
 
 class Symbol():
-    def __init__(self, label, traceList):
+    def __init__(self, label, label_index, traceList):
         self.label = label
+        self.label_index = label_index
         self.traceList = traceList
 
 
@@ -23,7 +24,7 @@ class InkmlFile():
         self.symbolList = symbolList
 
 
-def parse(filelist):
+def parse(grammar, filelist):
 
     ns = {'inkml': 'http://www.w3.org/2003/InkML'}
     inkmlFileList = []
@@ -80,20 +81,31 @@ def print_usage():
 
 
 def main():
+
+    try:
+        grammar = {}
+        i = 0
+        for line in open("listSymbolsPart4-revised.txt"):
+            grammar[line.strip()] = i
+            i += 1
+    except Exception:
+        print("Error: no grammar or symbol list found. Please ensure you "
+              "have listSymbolsPart4-revised.txt in the current directory")
+        sys.exit(1)
+
     if len(sys.argv) < 3:
         print_usage()
     elif sys.argv[1] == "-f":  # operate on files
-        parse(sys.argv[2:])
+        parse(grammar, sys.argv[2:])
     elif sys.argv[1] == "-d":  # operate on directories
         filelist = []
         for arg in sys.argv[2:]:
             for filename in os.listdir(arg):
                 filelist.append(os.path.join(arg, filename))
-        print(filelist)
-        parse(filelist)
+        parse(grammar, filelist)
     elif sys.argv[1] == "-l":  # operate on a filelist
         f = open(sys.argv[2])
-        parse(f.readlines())
+        parse(grammar, f.readlines())
         f.close()
     else:
         print_usage()
