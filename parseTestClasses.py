@@ -7,6 +7,7 @@ class Trace():
     def __init__(self, id, pointList):
         self.id = id
         xy = pointList.split(',')
+        xy = list(map(int,xy))
         self.x = xy[::2]
         self.y = xy[1::2]
 
@@ -30,7 +31,8 @@ def parse(grammar, filelist):
     inkmlFileList = []
 
     for filename in filelist:
-        tree = ET.parse(filename)
+        with open(filename,'r') as filexml:
+            tree = ET.parse(filexml)
         root = tree.getroot()
 
         #get all traces for eqn
