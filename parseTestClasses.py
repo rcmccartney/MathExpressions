@@ -73,10 +73,10 @@ def parse(filelist):
 
 def print_usage():
     print("$ python3 parseInkml [flag] [arguments]")
-    print("$ flags:")
-    print("   -d [dir1 dir2...]   : operate on specified directories")
-    print("   -f [file1 file2...] : operate on the specified files")
-    print("   -l [filelist.txt]   : operate on the files in the specified text file")
+    print("flags:")
+    print("  -d [dir1 dir2...]   : operate on specified directories")
+    print("  -f [file1 file2...] : operate on the specified files")
+    print("  -l [filelist.txt]   : operate on the files in the specified text file")
 
 
 def main():
@@ -89,6 +89,7 @@ def main():
         for arg in sys.argv[2:]:
             for filename in os.listdir(arg):
                 filelist.append(os.path.join(arg, filename))
+        print(filelist)
         parse(filelist)
     elif sys.argv[1] == "-l":  # operate on a filelist
         f = open(sys.argv[2])
