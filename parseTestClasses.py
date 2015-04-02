@@ -28,7 +28,7 @@ class InkmlFile():
     def __init__(self, label, fname, symbol_list):
         self.label = label
         self.fname = fname
-        self.symbolList = symbol_list
+        self.symbol_list = symbol_list
 
 
 class Parser():
@@ -133,9 +133,9 @@ def main():
     else:
         print_usage()
 
-    p.print_results()
-    s = Split(p.parsed_inkml, len(p.grammar))
-    s.optimize_cosine()
+    #p.print_results()
+    s = Split(p.parsed_inkml, p.grammar)
+    s.optimize_kl()
 
 if __name__ == '__main__':
     main()
