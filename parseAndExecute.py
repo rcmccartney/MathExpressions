@@ -174,7 +174,7 @@ def main():
         print("-t not set : testing the classifier from parameters saved in", default_out)
 
     # STEP 1 - PARSING
-    print("\n######## Parsing input data ########")
+    print("\n############ Parsing input data ############")
     p = Parser(grammar_file)
     if sys.argv[1] == "-f":  # operate on files
         p.parse(sys.argv[2:])
@@ -190,13 +190,14 @@ def main():
         f.close()
     else:
         print_usage()
+    print("Parsed", len(p.parsed_inkml), "InkML files")
     if verbose:
         p.print_results()
 
     # STEP 2 - SPLITTING (ONLY FOR TRAINING) AND
     # STEP 3 - FEATURE EXTRACTION
     if not testing:
-        print("\n######## Splitting input data ########")
+        print("\n########### Splitting input data ###########")
         s = Split(p.parsed_inkml, p.grammar, verbose)
         s.optimize_cosine()
         print("\n######## Running feature extraction ########")
@@ -208,10 +209,9 @@ def main():
     # STEP 4 - CLASSIFICATION
     c = Classifier(f.get_fake_data()[0], f.get_fake_data()[1], default_out, testing, verbose)
     if not testing:
-        print("\n######## Training the classifier ########")
-        
+        print("\n########## Training the classifier #########")
 
-    print("\n######## Running classification ########")
+    print("\n########## Running classification ##########")
 
 
 if __name__ == '__main__':

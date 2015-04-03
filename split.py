@@ -63,11 +63,11 @@ class Split():
             self.train = best_train
             self.test = best_test
             iterations += 1
+        print("Applied", name, "with starting value of", start_s,
+              "and ending value", best_s, "after", iterations, "iterations")
+        print("Training set contains", len(self.train), "instances and test set contains",
+              len(self.test), "instances")
         if self.verbose:
-            print("Applied", name, "with starting value of", start_s,
-                  "and ending value", best_s, "after", iterations, "iterations")
-            print("Training set contains", len(self.train), "instances and test set contains",
-                  len(self.test), "instances")
             print("Gram : ", end="")
             self.print_grammar()
             print("Train: ", end="")
