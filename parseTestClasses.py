@@ -6,6 +6,7 @@ from split import *
 
 
 class Trace():
+    """ This class represents a trace of (x,y) coordinates within a single symbol """
 
     def __init__(self, id, point_list):
         self.id = id
@@ -16,6 +17,7 @@ class Trace():
 
 
 class Symbol():
+    """ This class represents a single Symbol to be classified """
 
     def __init__(self, label, label_index, trace_list):
         self.label = label
@@ -24,6 +26,7 @@ class Symbol():
 
 
 class InkmlFile():
+    """ This class represents the data from a single input InkML file """
 
     def __init__(self, label, fname, symbol_list):
         self.label = label
@@ -32,21 +35,31 @@ class InkmlFile():
 
 
 class Parser():
+    """ This class reads the grammar file and parses the input files """
 
-    def __init__(self):
+    def __init__(self, grammar_file):
+        """
+        Initializes the parser for the Inkml files
+        :param grammar_file: file containing the valid symbols to be classified
+        """
         self.grammar = {}
         self.parsed_inkml = []
         try:
             i = 0
-            for line in open("listSymbolsPart4-revised.txt"):
+            for line in open(grammar_file):
                 self.grammar[line.strip()] = i
                 i += 1
         except IOError:
-            print("Error: no grammar or symbol list found. Please ensure you "
-                  "have listSymbolsPart4-revised.txt in the current directory")
+            print("Error: no grammar or symbol list found. Please ensure you have listSymbolsPart4-revised.txt"
+                  " in the current directory or have specified a different symbol list")
             raise
 
     def parse(self, filelist):
+        """
+        Walks the XML tree and parses each XML file
+        and saves results into self.parsed_inkml
+        :param filelist: the files to parse as a list of Strings
+        """
 
         ns = {'inkml': 'http://www.w3.org/2003/InkML'}
         inkmlfilelist = []
@@ -56,7 +69,7 @@ class Parser():
                 tree = ET.parse(filexml)
             root = tree.getroot()
 
-            #get all traces for eqn
+            # get all traces for eqn
             tracelisttemp = {}
             for trace in root.findall('inkml:trace', ns):
                 traceid = int(trace.attrib['id'])
@@ -94,6 +107,8 @@ class Parser():
         self.parsed_inkml = inkmlfilelist
 
     def print_results(self):
+        """ Prints all of the files parsed by the system """
+
         for file in self.parsed_inkml:
             print("file:", file.label, "filename", file.fname)
             for symbol in file.symbolList:
@@ -106,14 +121,52 @@ class Parser():
 
 
 def print_usage():
+    """ Prints correct usage of the program """
+
     print("$ python3 parseInkml [flag] [arguments]")
     print("flags:")
-    print("  -d [dir1 dir2...]   : operate on specified directories")
+    print("  -t <params.txt>     : train classifier with optional output file (no flag set will perform testing)")
+    print("  -p [params.txt]     : load parameters for testing from params.txt instead of default location")
+    print("  -d [dir1 dir2...]   : operate on the specified directories")
     print("  -f [file1 file2...] : operate on the specified files")
-    print("  -l [filelist.txt]   : operate on the files in the specified text file")
+    print("  -l [filelist.txt]   : operate on the files listed in the specified text file")
+    print("  -v                  : turn on verbose output")
+
+
+def get_saved_params():
+    """ this loads the saved parameters from the last training of the system """
+    return None
 
 
 def main():
+    """
+    This is the pipeline of the system
+    """
+
+    testing = True
+    verbose = False
+    default_out = "params.txt"
+    grammar = "listSymbolsPart4-revised.txt"
+
+    print("Running", sys.argv[0])
+    if "-t" in sys.argv:
+        index = sys.argv.index("-t")
+        if index < len(sys.argv) - 1 and "-" not in sys.argv[index+1]:
+            default_out = sys.argv[index+1]
+            sys.argv.remove(default_out)
+        sys.argv.remove("-t")
+        testing = False
+        print("Flag set for training the classifier from parameters saved in", default_out)
+    else:
+        if "-p" in sys.argv:
+            i = sys.argv.index("-p")
+            default_out = sys.argv[i + 1]
+            sys.argv.remove("-p")
+            sys.argv.remove(default_out)
+        print("Testing the classifier from parameters saved in", default_out)
+        params = get_saved_params(default_out)
+
+    print("\n######## Parsing input data ########\n")
 
     p = Parser()
     if len(sys.argv) < 3:
@@ -133,9 +186,11 @@ def main():
     else:
         print_usage()
 
-    #p.print_results()
+
+    # #p.print_results()
     s = Split(p.parsed_inkml, p.grammar)
     s.optimize_kl()
+
 
 if __name__ == '__main__':
     main()
