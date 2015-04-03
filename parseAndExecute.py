@@ -3,6 +3,7 @@ import os
 import sys
 import ntpath
 from split import *
+from features import *
 
 
 class Trace():
@@ -133,12 +134,6 @@ def print_usage():
     print("  -v                  : turn on verbose output")
 
 
-def get_saved_params():
-    # :TODO load saved classifier parameters
-    """ this loads the saved parameters from the last training of the system """
-    return None
-
-
 def main():
     """
     This is the pipeline of the system
@@ -148,6 +143,8 @@ def main():
     verbose = False
     default_out = "params.txt"
     # :TODO allow grammar to be taken on command line
+    # :TODO JIE make sure the above works for the time data
+    # :TODO JIE make sure the above works when the testing class is missing
     grammar_file = "listSymbolsPart4-revised.txt"
 
     print("Running", sys.argv[0])
@@ -166,7 +163,6 @@ def main():
             sys.argv.remove("-p")
             sys.argv.remove(default_out)
         print("Testing the classifier from parameters saved in", default_out)
-        params = get_saved_params(default_out)
 
     if "-v" in sys.argv:
         print("Using verbose output")
@@ -195,11 +191,20 @@ def main():
     if verbose:
         p.print_results()
 
-    # STEP 2 - SPLITTING (ONLY FOR TRAINING)
+    # STEP 2 - SPLITTING (ONLY FOR TRAINING) AND
+    # STEP 3 - FEATURE EXTRACTION
     if not testing:
         print("\n######## Splitting input data ########\n")
         s = Split(p.parsed_inkml, p.grammar, verbose)
         s.optimize_cosine()
+        f = FeatureExtraction(s.train, s.test, verbose)
+    else:
+        f = FeatureExtraction(p.parsed_inkml, None, verbose)
+
+    # STEP 4 - CLASSIFICATION
+    c = classifier(f.get_fake_data(), default_out, testing, verbose)
+
+
 
 
 if __name__ == '__main__':

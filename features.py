@@ -6,9 +6,10 @@ class FeatureExtraction():
     a 2D array of features and a 1D array of output classes
     """
 
-    def __init__(self, train, test):
+    def __init__(self, train, test, verbose):
         self.train = train
         self.test = test
+        self.verbose = verbose
         self.x = []  # 2d array of features
         self.y = []  # 1d array of class values
 
