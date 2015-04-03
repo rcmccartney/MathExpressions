@@ -134,6 +134,7 @@ def print_usage():
 
 
 def get_saved_params():
+    # :TODO load saved classifier parameters
     """ this loads the saved parameters from the last training of the system """
     return None
 
@@ -146,7 +147,8 @@ def main():
     testing = True
     verbose = False
     default_out = "params.txt"
-    grammar = "listSymbolsPart4-revised.txt"
+    # :TODO allow grammar to be taken on command line
+    grammar_file = "listSymbolsPart4-revised.txt"
 
     print("Running", sys.argv[0])
     if "-t" in sys.argv:
@@ -166,9 +168,14 @@ def main():
         print("Testing the classifier from parameters saved in", default_out)
         params = get_saved_params(default_out)
 
-    print("\n######## Parsing input data ########\n")
+    if "-v" in sys.argv:
+        print("Using verbose output")
+        verbose = True
+        sys.argv.remove("-v")
 
-    p = Parser()
+    # STEP 1 - PARSING
+    print("\n######## Parsing input data ########\n")
+    p = Parser(grammar_file)
     if len(sys.argv) < 3:
         print_usage()
     elif sys.argv[1] == "-f":  # operate on files
@@ -185,11 +192,14 @@ def main():
         f.close()
     else:
         print_usage()
+    if verbose:
+        p.print_results()
 
-
-    # #p.print_results()
-    s = Split(p.parsed_inkml, p.grammar)
-    s.optimize_kl()
+    # STEP 2 - SPLITTING (ONLY FOR TRAINING)
+    if not testing:
+        print("\n######## Splitting input data ########\n")
+        s = Split(p.parsed_inkml, p.grammar, verbose)
+        s.optimize_cosine()
 
 
 if __name__ == '__main__':

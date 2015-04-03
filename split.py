@@ -3,18 +3,20 @@ import scipy.stats
 import numpy as np
 import operator
 
+
 class Split():
     """
     This class splits the data into a training a testing set
     """
+    # hyperparameters to control the functionality of the Splitter
     split_percent = 0.7
     threshold = 0.001
     iterations = 100
 
-    def __init__(self, inkmllist, grammar):
-
+    def __init__(self, inkmllist, grammar, verbose):
         self.train = []
         self.test = []
+        self.verbose = verbose
         self.num_classes = len(grammar)
         self.grammar = grammar
         # make a purely random split
@@ -27,15 +29,17 @@ class Split():
         self.splits = int(min(len(self.train), len(self.test)) / 2)
 
     def optimize_kl(self):
+        """ Uses KL divergence to optimize the train/test split """
         self.optimize(scipy.stats.entropy, operator.gt, Split.threshold, "KL Divergence")
 
     def optimize_cosine(self):
-        # want to maximize the cosine similarity
+        """ uses cosine similarity to optimize the train/test split """
         self.optimize(self.cosine, operator.lt, 1-Split.threshold, "Cosine similarity")
 
     def optimize(self, similarity_fn, cmp, threshold, name):
-
-        # Iteratively increase similarity metric until we are below threshold or at given number of iterations
+        """
+        Iteratively increase similarity metric until we are better than threshold or at given number of iterations
+        """
         pk = self.calc_distr(self.train)
         qk = self.calc_distr(self.test)
         start_s = similarity_fn(pk, qk)
@@ -59,20 +63,24 @@ class Split():
             self.train = best_train
             self.test = best_test
             iterations += 1
-        print("Applied", name, "with starting value of", start_s, "and ending value", best_s, "after", iterations, "iterations")
-        print("Training set contains", len(self.train), "instances and test set contains", len(self.test), "instances")
-        print("Gram : ", end="")
-        self.print_grammar()
-        print("Train: ", end="")
-        self.print_distr(self.calc_distr(self.train))
-        print("Count: ", end="")
-        self.print_distr(self.calc_distr(self.train), normalized=False)
-        print("Test : ", end="")
-        self.print_distr(self.calc_distr(self.test))
-        print("Count: ", end="")
-        self.print_distr(self.calc_distr(self.test), normalized=False)
+        if self.verbose:
+            print("Applied", name, "with starting value of", start_s,
+                  "and ending value", best_s, "after", iterations, "iterations")
+            print("Training set contains", len(self.train), "instances and test set contains",
+                  len(self.test), "instances")
+            print("Gram : ", end="")
+            self.print_grammar()
+            print("Train: ", end="")
+            self.print_distr(self.calc_distr(self.train))
+            print("Count: ", end="")
+            self.print_distr(self.calc_distr(self.train), normalized=False)
+            print("Test : ", end="")
+            self.print_distr(self.calc_distr(self.test))
+            print("Count: ", end="")
+            self.print_distr(self.calc_distr(self.test), normalized=False)
 
     def calc_distr(self, inkmllist):
+        """ Calculates an unnormalized distribution (counts) over the grammar """
         distr = [0]*self.num_classes
         for eqn in inkmllist:
             for symbol in eqn.symbol_list:
@@ -80,6 +88,7 @@ class Split():
         return distr
 
     def make_new_distr(self, swap_train, swap_test):
+        """ Swaps a single instance between copies of the training and testing sets """
         new_train = self.train[:]
         new_test = self.test[:]
         i = self.train.index(swap_train)
@@ -89,13 +98,15 @@ class Split():
         return new_train, new_test
 
     def print_grammar(self):
+        """ prints the grammar being used for verbose mode """
         print("[ ", end="")
         gr = sorted(self.grammar, key=self.grammar.get)
         for i in range(len(self.grammar)):
+            to_print = gr[i] if len(gr[i]) < 5 else gr[i][:4]
             if i < len(self.grammar) - 1:
-                print("{0:>4}".format(gr[i]), end=", ")
+                print("{0:>4}".format(to_print), end=", ")
             else:
-                print("{0:>4}".format(gr[i]), end="]\n")
+                print("{0:>4}".format(to_print), end="]\n")
 
     @staticmethod
     def cosine(pk, qk):
@@ -111,6 +122,10 @@ class Split():
 
     @staticmethod
     def update_distr(pk, pk_swap, qk, qk_swap):
+        """
+        This method moves the counts for a single inkml file from
+        one distribution to the other distribution
+        """
         new_pk = pk[:]
         new_qk = qk[:]
         for symbol in pk_swap.symbol_list:
@@ -123,6 +138,10 @@ class Split():
 
     @staticmethod
     def print_distr(distr, normalized=True):
+        """
+        Prints the distribution as either a probability distr (when normalized)
+        or as the counts of symbols (when not normalized)
+        """
         if normalized:
             norm = sum(distr)
             formatting = "{:.2f}"
