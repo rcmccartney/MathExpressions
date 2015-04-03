@@ -148,6 +148,11 @@ def main():
     grammar_file = "listSymbolsPart4-revised.txt"
 
     print("Running", sys.argv[0])
+    if "-v" in sys.argv:
+        print("Using verbose output")
+        verbose = True
+        sys.argv.remove("-v")
+
     if "-t" in sys.argv:
         index = sys.argv.index("-t")
         if index < len(sys.argv) - 1 and "-" not in sys.argv[index+1]:
@@ -163,11 +168,6 @@ def main():
             sys.argv.remove("-p")
             sys.argv.remove(default_out)
         print("Testing the classifier from parameters saved in", default_out)
-
-    if "-v" in sys.argv:
-        print("Using verbose output")
-        verbose = True
-        sys.argv.remove("-v")
 
     # STEP 1 - PARSING
     print("\n######## Parsing input data ########\n")
