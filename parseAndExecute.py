@@ -4,7 +4,7 @@ import sys
 import ntpath
 from split import *
 from features import *
-
+from classifier import *
 
 class Trace():
     """ This class represents a trace of (x,y) coordinates within a single symbol """
@@ -23,7 +23,7 @@ class Symbol():
     def __init__(self, label, label_index, trace_list):
         self.label = label
         self.label_index = label_index
-        self.traceList = trace_list
+        self.trace_list = trace_list
 
 
 class InkmlFile():
@@ -112,9 +112,9 @@ class Parser():
 
         for file in self.parsed_inkml:
             print("file:", file.label, "filename", file.fname)
-            for symbol in file.symbolList:
+            for symbol in file.symbol_list:
                 print('\t', "symbol:", symbol.label, "index:", symbol.label_index)
-                for trace in symbol.traceList:
+                for trace in symbol.trace_list:
                     print('\t\t', "trace:", str(trace.id))
                     print(trace.x)
                     print(trace.y)
@@ -122,7 +122,7 @@ class Parser():
 
 
 def print_usage():
-    """ Prints correct usage of the program """
+    """ Prints correct usage of the program and exits """
 
     print("$ python3 parseInkml [flag] [arguments]")
     print("flags:")
@@ -132,12 +132,15 @@ def print_usage():
     print("  -f [file1 file2...] : operate on the specified files")
     print("  -l [filelist.txt]   : operate on the files listed in the specified text file")
     print("  -v                  : turn on verbose output")
+    sys.exit(1)
 
 
 def main():
     """
     This is the pipeline of the system
     """
+    if len(sys.argv) < 3:
+        print_usage()
 
     testing = True
     verbose = False
@@ -149,7 +152,7 @@ def main():
 
     print("Running", sys.argv[0])
     if "-v" in sys.argv:
-        print("Using verbose output")
+        print("-v : using verbose output")
         verbose = True
         sys.argv.remove("-v")
 
@@ -160,21 +163,20 @@ def main():
             sys.argv.remove(default_out)
         sys.argv.remove("-t")
         testing = False
-        print("Flag set for training the classifier from parameters saved in", default_out)
+        print("-t : training the classifier from parameters saved in", default_out)
     else:
         if "-p" in sys.argv:
             i = sys.argv.index("-p")
             default_out = sys.argv[i + 1]
             sys.argv.remove("-p")
             sys.argv.remove(default_out)
-        print("Testing the classifier from parameters saved in", default_out)
+            print("-p set,", end=" ")
+        print("-t not set : testing the classifier from parameters saved in", default_out)
 
     # STEP 1 - PARSING
-    print("\n######## Parsing input data ########\n")
+    print("\n######## Parsing input data ########")
     p = Parser(grammar_file)
-    if len(sys.argv) < 3:
-        print_usage()
-    elif sys.argv[1] == "-f":  # operate on files
+    if sys.argv[1] == "-f":  # operate on files
         p.parse(sys.argv[2:])
     elif sys.argv[1] == "-d":  # operate on directories
         filelist = []
@@ -194,17 +196,22 @@ def main():
     # STEP 2 - SPLITTING (ONLY FOR TRAINING) AND
     # STEP 3 - FEATURE EXTRACTION
     if not testing:
-        print("\n######## Splitting input data ########\n")
+        print("\n######## Splitting input data ########")
         s = Split(p.parsed_inkml, p.grammar, verbose)
         s.optimize_cosine()
+        print("\n######## Running feature extraction ########")
         f = FeatureExtraction(s.train, s.test, verbose)
     else:
+        print("\n######## Running feature extraction ########")
         f = FeatureExtraction(p.parsed_inkml, None, verbose)
 
     # STEP 4 - CLASSIFICATION
-    c = classifier(f.get_fake_data(), default_out, testing, verbose)
+    c = Classifier(f.get_fake_data()[0], f.get_fake_data()[1], default_out, testing, verbose)
+    if not testing:
+        print("\n######## Training the classifier ########")
+        
 
-
+    print("\n######## Running classification ########")
 
 
 if __name__ == '__main__':
