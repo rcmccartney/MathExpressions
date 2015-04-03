@@ -2,6 +2,7 @@ import xml.etree.ElementTree as ET
 import os
 import sys
 import ntpath
+import matplotlib.pyplot as plt 
 from split import *
 from features import *
 from classifier import *
@@ -11,11 +12,32 @@ class Trace():
 
     def __init__(self, id, point_list):
         self.id = id
+        tempx = []
+        tempy = []
         xy = point_list.split(',')
-        xy = list(map(float, xy))
-        self.x = xy[::2]
-        self.y = xy[1::2]
+        for xy_point in xy:
+            tempx.append(xy_point.lstrip().split()[0])
+            tempy.append(xy_point.lstrip().split()[1])
+        self.x = list(map(float,tempx))
+        self.y = list(map(float,tempy))
 
+    #taken from Kenny's code
+    def getBoundaries(self):
+        minX = self.x[0]
+        maxX = self.x[0]
+        minY = self.y[0]
+        maxY = self.y[0]
+        for x in self.x:
+            if x < minX:
+                minX = x
+            if x > maxX:
+                maxX = x
+        for y in self.y:
+            if y < minY:
+                minY = y
+            if y > maxY:
+                maxY = y
+        return minX, maxX, minY, maxY
 
 class Symbol():
     """ This class represents a single Symbol to be classified """
@@ -25,7 +47,31 @@ class Symbol():
         self.label_index = label_index
         self.trace_list = trace_list
 
-
+    def print_traces(self):
+        xTemp, yTemp = self.get_all_points()
+        plt.figure()
+        plt.scatter(xTemp, yTemp)
+        plt.pause(3)
+        plt.close()
+        #rescaled coordinates
+        boundSquareLen=1
+        x,y = self.get_all_points()
+        f = FeatureExtraction(None, None, None)
+        xTrans, yTrans = f.rescale_points(x,y,1)
+        plt.figure()
+        plt.scatter(xTrans, yTrans)
+        plt.pause(3)
+        plt.close()
+    
+    def get_all_points(self):
+        xTemp = []
+        yTemp = []
+        for trace in self.trace_list:
+            xTemp.extend(trace.x)
+            yTemp.extend(trace.y)
+        return xTemp, yTemp
+    
+        
 class InkmlFile():
     """ This class represents the data from a single input InkML file """
 
@@ -75,14 +121,15 @@ class Parser():
             for trace in root.findall('inkml:trace', ns):
                 traceid = int(trace.attrib['id'])
                 #generate list of (x,y)
-                traceval = trace.text.replace('\n', '').replace(',', '').replace(' ', ',')
-                tracelisttemp[traceid] = Trace(traceid, traceval)
+                tracelisttemp[traceid] = Trace(traceid, trace.text)
 
             #get all symbols
             symbollist = []
             toptracegroup = root.find('inkml:traceGroup', ns)
             for subTraceGroup in toptracegroup.findall('inkml:traceGroup', ns):  # for each symbol
                 annotation = subTraceGroup.find('inkml:annotation', ns).text
+                if annotation is None:
+                    annotation = "No_Label"
                 #get tracelist for symbol
                 traceviewlisttemp = []
                 for traceview in subTraceGroup.findall('inkml:traceView', ns):
@@ -146,8 +193,6 @@ def main():
     verbose = False
     default_out = "params.txt"
     # :TODO allow grammar to be taken on command line
-    # :TODO JIE make sure the above works for the time data
-    # :TODO JIE make sure the above works when the testing class is missing
     grammar_file = "listSymbolsPart4-revised.txt"
 
     print("Running", sys.argv[0])
@@ -205,7 +250,7 @@ def main():
     else:
         print("\n######## Running feature extraction ########")
         f = FeatureExtraction(p.parsed_inkml, None, verbose)
-
+    
     # STEP 4 - CLASSIFICATION
     c = Classifier(f.get_fake_data()[0], f.get_fake_data()[1], default_out, testing, verbose)
     if not testing:
