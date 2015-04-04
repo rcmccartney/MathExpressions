@@ -70,8 +70,9 @@ class InkmlFile():
         self.symbol_list = symbol_list
         try:
             perl_out = subprocess.check_output(["perl", "crohme2lg.pl", "-s", fname])
-            for line in perl_out:
-                print(perl_out)
+            # decode the binary that is returned into a string
+            string_out = perl_out.decode("utf-8")
+            self.relations = string_out[string_out.index("# Relations"):]
         except Exception as e:
             print("Issue with processing", fname, "into .lg:", e)
 
