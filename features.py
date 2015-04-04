@@ -94,7 +94,7 @@ class FeatureExtraction():
         x = [len(symbol.trace_list)]
         return x
         
-    def get_feature_set(self,inkml_file_list,verbose):
+    def get_feature_set(self, inkml_file_list, verbose):
         x_grid = []
         y_true_class = []
         inkml_file_ref = []
@@ -106,7 +106,6 @@ class FeatureExtraction():
                 x.extend(self.get_mean_x(symbol,verbose))
                 x.extend(self.get_mean_y(symbol,verbose))
                 x.extend(self.get_aspect_ratio(symbol,verbose))
-                
                 x_grid.append(x)
                 y_true_class.append(symbol.label_index)
                 inkml_file_ref.append([inkml_file, symbol.labelXML])

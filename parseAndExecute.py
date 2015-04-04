@@ -76,7 +76,6 @@ class InkmlFile():
             # decode the binary that is returned into a string
             string_out = perl_out.decode("utf-8")
             self.relations = string_out[string_out.index("# Relations"):]
-            print(self.relations)
         except Exception as e:
             print("Issue with processing", fname, "into .lg:", e)
 
@@ -216,17 +215,17 @@ def main():
             grammar_file = sys.argv[index+1]
             sys.argv.remove(grammar_file)
         sys.argv.remove("-g")
-        print("-g: grammar file loaded from ", grammar_file)
+        print("-g: grammar file loaded from", grammar_file)
     else:
-        print("-g not set: grammar file loaded from ", grammar_file)
+        print("-g not set: grammar file loaded from", grammar_file)
     if "-t" in sys.argv:
         index = sys.argv.index("-t")
         if index < len(sys.argv) - 1 and "-" not in sys.argv[index+1]:
-            default_out = sys.argv[index+1]
-            sys.argv.remove(default_out)
+            default_param_out = sys.argv[index+1]
+            sys.argv.remove(default_param_out)
         sys.argv.remove("-t")
         testing = False
-        print("-t : training the classifier from parameters saved in", default_out)
+        print("-t : training the classifier and saving parameters to", default_param_out)
     else:
         if "-p" in sys.argv:
             i = sys.argv.index("-p")
@@ -234,7 +233,7 @@ def main():
             sys.argv.remove("-p")
             sys.argv.remove(default_out)
             print("-p set,", end=" ")
-        print("-t not set : testing the classifier from parameters saved in", default_out)
+        print("-t not set : testing the classifier from parameters saved in", default_param_out)
 
     # STEP 1 - PARSING
     print("\n############ Parsing input data ############")
@@ -286,14 +285,16 @@ def main():
     else:
         print("\n######## Running feature extraction ########")
         f = FeatureExtraction(p.parsed_inkml, None, verbose)
-    
+        xgrid_test, ytclass_test, inkmat_test = f.get_feature_set(p.parsed_inkml, verbose)
+
     # STEP 4 - CLASSIFICATION
-    c = Classifier(xgrid_train, ytclass_train, xgrid_test, ytclass_test, default_out, testing, verbose)
     if not testing:
         print("\n########## Training the classifier #########")
-        c1 = Classifier(xgrid_train, ytclass_train, "knntraintemp.txt", False, False)
-        c1.knn(1, np.asarray(xgrid_test), np.asarray(ytclass_test))
+        c = Classifier(train_data=xgrid_train, train_targ=ytclass_train, grammar=p.grammar, verbose=verbose)
+    else:
+        c = Classifier(param_file=default_param_out)
     print("\n########## Running classification ##########")
+    c.test_classifiers(xgrid_test, ytclass_test)
 
 
 if __name__ == '__main__':
