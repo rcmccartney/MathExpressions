@@ -197,12 +197,14 @@ def main():
     # :TODO allow grammar to be taken on command line
     grammar_file = "listSymbolsPart4-revised.txt"
 
+    #################################
+    # STEP 0 - GET COMMAND LINE ARGS
+    #################################
     print("Running", sys.argv[0])
     if "-v" in sys.argv:
         print("-v : using verbose output")
         verbose = True
         sys.argv.remove("-v")
-
     if "-t" in sys.argv:
         index = sys.argv.index("-t")
         if index < len(sys.argv) - 1 and "-" not in sys.argv[index+1]:
@@ -220,7 +222,9 @@ def main():
             print("-p set,", end=" ")
         print("-t not set : testing the classifier from parameters saved in", default_out)
 
+    #################################
     # STEP 1 - PARSING
+    #################################
     print("\n############ Parsing input data ############")
     p = Parser(grammar_file)
     if sys.argv[1] == "-f":  # operate on files
@@ -241,8 +245,10 @@ def main():
     if verbose:
         p.print_results()
 
-    # STEP 2 - SPLITTING (ONLY FOR TRAINING) AND
+    #################################
+    # STEP 2 - SPLITTING DATA (ONLY FOR TRAINING)
     # STEP 3 - FEATURE EXTRACTION
+    #################################
     if not testing:
         print("\n########### Splitting input data ###########")
         s = Split(p.parsed_inkml, p.grammar, verbose)
@@ -252,14 +258,19 @@ def main():
     else:
         print("\n######## Running feature extraction ########")
         f = FeatureExtraction(p.parsed_inkml, None, verbose)
-    
+
+    #################################
     # STEP 4 - CLASSIFICATION
+    #################################
     c = Classifier(f.get_fake_data()[0], f.get_fake_data()[1], default_out, testing, verbose)
     if not testing:
         print("\n########## Training the classifier #########")
 
     print("\n########## Running classification ##########")
 
+    #################################
+    # STEP 6 - GENERATE .LG FILES
+    #################################
 
 if __name__ == '__main__':
     main()
