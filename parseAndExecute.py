@@ -2,11 +2,11 @@ import xml.etree.ElementTree as ET
 import os
 import sys
 import ntpath
+import matplotlib.pylab as plt
 import subprocess
 from split import *
 from features import *
 from classifier import *
-
 
 class Trace():
     """ This class represents a trace of (x,y) coordinates within a single symbol """
@@ -47,8 +47,10 @@ class Symbol():
         boundSquareLen = 1
         f = FeatureExtraction(None, None, None)
         x_trans, y_trans = f.rescale_points(x, y, 1)
+        x_interp, y_interp = f.resample_points(x_trans, y_trans, 5)
         plt.figure()
         plt.scatter(x_trans, y_trans)
+        plt.scatter(x_interp, y_interp)
         plt.pause(3)
         plt.close()
     
@@ -261,6 +263,23 @@ def main():
         print("\n######## Running feature extraction ########")
         f = FeatureExtraction(s.train, s.test, verbose)
         
+        '''for inkmlFile in s.train:
+            for symbol in inkmlFile.symbol_list:
+                symbol.print_traces()'''
+        
+        for inkmlFile in s.train:
+            for symbol in inkmlFile.symbol_list:
+                symbol_mat = np.zeros([101,101])
+                for trace in symbol.trace_list:
+                    trace_mat = f.convert_to_image(trace.x,trace.y)
+                    symbol_mat = np.add(symbol_mat,trace_mat)
+                fig = plt.figure()
+                ax = fig.add_subplot(1,1,1)
+                ax.set_aspect('equal')
+                plt.imshow(symbol_mat)
+                plt.show()
+                
+        exit()
         xgrid_train,ytclass_train,inkmat_train = f.get_feature_set(s.train,verbose)
         xgrid_test,ytclass_test,inkmat_test = f.get_feature_set(s.test,verbose)
         

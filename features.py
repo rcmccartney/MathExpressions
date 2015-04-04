@@ -1,6 +1,7 @@
 __author__ = 'mccar_000'
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy.interpolate as sp
 
 class FeatureExtraction():
     """
@@ -37,6 +38,25 @@ class FeatureExtraction():
         yTrans = [(y-yMin)/divScale for y in yList]
         return xTrans, yTrans
                 
+    def resample_points(self, xList, yList, multIncrease):
+        f1 = sp.interp1d(range(0,len(xList)),xList,kind = 'linear')
+        f2 = sp.interp1d(range(0,len(yList)),yList,kind = 'linear')
+        
+        new_tseries = np.linspace(0, len(xList)-1, len(xList)*multIncrease)
+        return f1(new_tseries),f2(new_tseries)
+    
+    def convert_to_image(self, xList, yList, pixelAxis = 100):
+        x_trans, y_trans = self.rescale_points(xList, yList, 1)
+        x_res, y_res = self.resample_points(x_trans,y_trans,10)
+        x_res_np = np.array(x_res)*pixelAxis
+        y_res_np = np.array(y_res)*pixelAxis
+        print(x_res_np.astype(int))
+        print(y_res_np.astype(int))
+        image_mat = np.zeros([pixelAxis+1, pixelAxis+1])
+        image_mat[x_res_np.astype(int),y_res_np.astype(int)] = 1
+        return image_mat
+        
+    
     def get_aspect_ratio(self, symbol, verbose):        
         xMin, xMax, yMin, yMax = 9999,-9999,9999,-9999
         for trace in symbol.trace_list:
