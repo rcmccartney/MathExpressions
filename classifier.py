@@ -7,12 +7,8 @@ import matplotlib.patches as patches
 import math
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
-<<<<<<< Updated upstream
-from classifiers.KnnClassifier import KnnClassifier
-=======
 from classifiers.KnnClassifier import *
 
->>>>>>> Stashed changes
 
 class Classifier():
     """ This class is a wrapper around whatever classifiers are implemented for the inkml classification """
@@ -32,15 +28,10 @@ class Classifier():
         self.verbose = verbose
         self.grammar = grammar
 
-<<<<<<< Updated upstream
-    def knn(self, k, test_data, test_target=None):
-        c = KnnClassifier(self.data, self.target)
-=======
     def knn(self):
         c = KnnClassifier(self.train_data, self.train_target, len(self.grammar))
->>>>>>> Stashed changes
         print("** 1-nn **")
-        c.k_near(k, test_data, test_target)
+        c.k_near(1, test_data, test_target)
         print_confusion(c.confusion, c.X.shape[0])
 
     @staticmethod
