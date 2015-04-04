@@ -8,6 +8,7 @@ from split import *
 from features import *
 from classifier import *
 
+
 class Trace():
     """ This class represents a trace of (x,y) coordinates within a single symbol """
 
@@ -44,7 +45,6 @@ class Symbol():
         plt.pause(3)
         plt.close()
         #rescaled coordinates
-        boundSquareLen = 1
         f = FeatureExtraction(None, None, None)
         x_trans, y_trans = f.rescale_points(x, y, 1)
         x_interp, y_interp = f.resample_points(x_trans, y_trans, 5)
@@ -184,6 +184,7 @@ def print_usage():
     print("  -d [dir1 dir2...]   : operate on the specified directories")
     print("  -f [file1 file2...] : operate on the specified files")
     print("  -l [filelist.txt]   : operate on the files listed in the specified text file")
+    print("  -o [outdir]         : specify the output directory for .lg files")
     print("  -v                  : turn on verbose output")
     print("  -g                  : specify grammar file location")
     sys.exit(1)
@@ -193,19 +194,31 @@ def main():
     """
     This is the pipeline of the system
     """
+    # :TODO specify the output directory
+
     if len(sys.argv) < 3:
         print_usage()
 
     testing = True
     verbose = False
-    default_out = "params.txt"
+    default_param_out = "params.txt"
+    default_lg_out = ".\\output\\"
+    grammar_file = "listSymbolsPart4-revised.txt"
 
     print("Running", sys.argv[0])
     if "-v" in sys.argv:
         print("-v : using verbose output")
         verbose = True
         sys.argv.remove("-v")
-
+    if "-g" in sys.argv:  # setting grammar file location
+        index = sys.argv.index("-g")
+        if index < len(sys.argv) - 1 and "-" not in sys.argv[index+1]:
+            grammar_file = sys.argv[index+1]
+            sys.argv.remove(grammar_file)
+        sys.argv.remove("-g")
+        print("-g: grammar file loaded from ", grammar_file)
+    else:
+        print("-g not set: grammar file loaded from ", grammar_file)
     if "-t" in sys.argv:
         index = sys.argv.index("-t")
         if index < len(sys.argv) - 1 and "-" not in sys.argv[index+1]:
@@ -223,16 +236,6 @@ def main():
             print("-p set,", end=" ")
         print("-t not set : testing the classifier from parameters saved in", default_out)
 
-    #setting grammar file location
-    grammar_file = "listSymbolsPart4-revised.txt"
-    if "-g" in sys.argv:
-        i2 = sys.argv.index("-g")
-        if i2 < len(sys.argv) - 1 and "-" not in sys.argv[index+1]:
-            grammar_file = sys.argv[i2+1]
-            sys.argv.remove(grammar_file)
-        sys.argv.remove("-g")
-    print("-g: grammar file loaded from ", grammar_file)
-    
     # STEP 1 - PARSING
     print("\n############ Parsing input data ############")
     p = Parser(grammar_file)
@@ -262,33 +265,30 @@ def main():
         s.optimize_cosine()
         print("\n######## Running feature extraction ########")
         f = FeatureExtraction(s.train, s.test, verbose)
-        
-        '''for inkmlFile in s.train:
-            for symbol in inkmlFile.symbol_list:
-                symbol.print_traces()'''
-        
-        for inkmlFile in s.train:
-            for symbol in inkmlFile.symbol_list:
-                symbol_mat = np.zeros([101,101])
-                for trace in symbol.trace_list:
-                    trace_mat = f.convert_to_image(trace.x,trace.y)
-                    symbol_mat = np.add(symbol_mat,trace_mat)
-                fig = plt.figure()
-                ax = fig.add_subplot(1,1,1)
-                ax.set_aspect('equal')
-                plt.imshow(symbol_mat)
-                plt.show()
-
-        xgrid_train, ytclass_train,inkmat_train = f.get_feature_set(s.train, verbose)
+        if verbose:
+            for inkmlFile in s.train:
+                for symbol in inkmlFile.symbol_list:
+                    symbol.print_traces()
+            for inkmlFile in s.train:
+                for symbol in inkmlFile.symbol_list:
+                    symbol_mat = np.zeros([101, 101])
+                    for trace in symbol.trace_list:
+                        trace_mat = f.convert_to_image(trace.x,trace.y)
+                        symbol_mat = np.add(symbol_mat,trace_mat)
+                    fig = plt.figure()
+                    ax = fig.add_subplot(1,1,1)
+                    ax.set_aspect('equal')
+                    plt.imshow(symbol_mat)
+                    plt.show()
+        xgrid_train, ytclass_train, inkmat_train = f.get_feature_set(s.train, verbose)
         xgrid_test, ytclass_test, inkmat_test = f.get_feature_set(s.test, verbose)
         
     else:
         print("\n######## Running feature extraction ########")
         f = FeatureExtraction(p.parsed_inkml, None, verbose)
-        
     
     # STEP 4 - CLASSIFICATION
-    c = Classifier(f.get_fake_data()[0], f.get_fake_data()[1], default_out, testing, verbose)
+    c = Classifier(xgrid_train, ytclass_train, xgrid_test, ytclass_test, default_out, testing, verbose)
     if not testing:
         print("\n########## Training the classifier #########")
         c1 = Classifier(xgrid_train, ytclass_train, "knntraintemp.txt", False, False)
