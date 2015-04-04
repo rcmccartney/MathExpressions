@@ -2,6 +2,7 @@ __author__ = 'mccar_000'
 
 import numpy as np
 import scipy.interpolate as sp
+import matplotlib.pyplot as plt
 import warnings
 warnings.simplefilter("error")
 
@@ -50,6 +51,16 @@ class FeatureExtraction():
         image_mat = np.zeros([pixel_axis+1, pixel_axis+1])
         image_mat[x_res_np.astype(int), pixel_axis - y_res_np.astype(int)] = 1
         return image_mat
+
+    @staticmethod
+    def convert_and_plot(xlist, ylist, pixel_axis=20):
+        trace_mat = FeatureExtraction.convert_to_image(xlist, ylist, pixel_axis)
+        fig = plt.figure()
+        ax = fig.add_subplot(1, 1, 1)
+        ax.set_aspect('equal')
+        plt.imshow(trace_mat)
+        plt.show()
+        return trace_mat
 
     def get_aspect_ratio(self, symbol, verbose):        
         xMin, xMax, yMin, yMax = 9999,-9999,9999,-9999
