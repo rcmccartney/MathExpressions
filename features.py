@@ -1,5 +1,6 @@
 __author__ = 'mccar_000'
 import matplotlib.pyplot as plt
+import numpy as np
 
 class FeatureExtraction():
     """
@@ -36,48 +37,82 @@ class FeatureExtraction():
         yTrans = [(y-yMin)/divScale for y in yList]
         return xTrans, yTrans
                 
-    #this is copied from Kenny's code
-    def get_aspect_ratio(self, train, test, verbose):
-        plt.ion()
-        plt.show()
-        
-        self.train = train
-        self.test = test
+    def get_aspect_ratio(self, inkmlList, verbose):        
+        self.inkmlList = inkmlList
         self.verbose = verbose
         
         x = []
         y = []
-        for inkmlFile in self.train:
+        for inkmlFile in self.inkmlList:
             for symbol in inkmlFile.symbol_list:
-                min_x = 1
-                max_x = -1
-                min_y = 1
-                max_y = -1
+                
+                xMin, xMax, yMin, yMax = 9999,-9999,9999,-9999
                 for trace in symbol.trace_list:
-                    t_minX, t_maxX, t_minY, t_maxY = trace.getBoundaries()
-                    min_x = min(t_minX, min_x)
-                    max_x = max(t_maxX, max_x)
-                    min_y = min(t_minY, min_y)
-                    max_y = max(t_maxY, max_y)
-                w = (max_x - min_x)
-                h = (max_y - min_y)
-                ratio = w / h
+                    xMinTemp, xMaxTemp, yMinTemp, yMaxTemp = trace.get_boundaries()
+                    xMin = min(xMin, xMinTemp)
+                    xMax = max(xMax, xMaxTemp)
+                    yMin = min(yMin, yMinTemp)
+                    yMax = max(yMax, yMaxTemp)
+                w = abs(xMax-xMin)
+                h = abs(yMax-yMin)
+                ratio = w/h
                 x.append([ratio])
                 y.append([symbol.label_index])
         return x,y
-
-    #right now this is outputting a single list of symbols - not sure how to handle the training and test sets
   
-    def get_number_strokes(self, train, test, verbose):
-        self.train = train
-        self.test = test
+    def get_number_strokes(self, inkmlList, verbose):
+        self.inkmlList = inkmlList
         self.verbose = verbose
         
         x = []
         y = []
-        for inkmlFile in self.train:
+        for inkmlFile in self.inkmlList:
             for symbol in inkmlFile.symbol_list:
                 x.append([len(symbol.trace_list)])
                 y.append([symbol.label_index])
         return x,y
+    
+    def get_mean_x(self, inkmlList, verbose):
+        self.inkmlList = inkmlList
+        self.verbose = verbose
+        x=[]
+        y=[]
+        for inkmlFile in self.inkmlList:
+            for symbol in inkmlFile.symbol_list:
+                xTemp,yTemp = symbol.get_all_points()
+                xTrans,yTrans = self.rescale_points(xTemp,yTemp)
+                x.append([sum(xTrans)/float(len(xTrans))])
+                y.append([symbol.label_index])
+        return x,y
+        
+    def get_mean_y(self, inkmlList, verbose):
+        self.inkmlList = inkmlList
+        self.verbose = verbose
+        x=[]
+        y=[]
+        for inkmlFile in self.inkmlList:
+            for symbol in inkmlFile.symbol_list:
+                xTemp,yTemp = symbol.get_all_points()
+                xTrans,yTrans = self.rescale_points(xTemp,yTemp)
+                x.append([sum(yTrans)/float(len(yTrans))])
+                y.append([symbol.label_index])
+        return x,y
+        
+    def get_cov_xy(self, inkmlList, verbose):
+        self.inkmlList = inkmlList
+        self.verbose = verbose
+        x=[]
+        y=[]
+        for inkmlFile in self.inkmlList:
+            for symbol in inkmlFile.symbol_list:
+                xTemp,yTemp = symbol.get_all_points()
+                xTrans,yTrans = self.rescale_points(xTemp,yTemp)
+                cov = np.cov(xTrans,yTrans)
+                x.append(cov.flatten().tolist())
+                y.append([symbol.label_index])
+        return x,y
+        
+    def compose_feature_matrix(self, inkmlList, verbose):
+        self.inkmlList = inkmlList
+        self.verbose = verbose
         

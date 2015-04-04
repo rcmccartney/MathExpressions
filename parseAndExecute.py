@@ -181,6 +181,7 @@ def print_usage():
     print("  -f [file1 file2...] : operate on the specified files")
     print("  -l [filelist.txt]   : operate on the files listed in the specified text file")
     print("  -v                  : turn on verbose output")
+    print("  -g                  : specify grammar file location")
     sys.exit(1)
 
 
@@ -194,8 +195,6 @@ def main():
     testing = True
     verbose = False
     default_out = "params.txt"
-    # :TODO allow grammar to be taken on command line
-    grammar_file = "listSymbolsPart4-revised.txt"
 
     print("Running", sys.argv[0])
     if "-v" in sys.argv:
@@ -220,6 +219,16 @@ def main():
             print("-p set,", end=" ")
         print("-t not set : testing the classifier from parameters saved in", default_out)
 
+    #setting grammar file location
+    grammar_file = "listSymbolsPart4-revised.txt"
+    if "-g" in sys.argv:
+        i2 = sys.argv.index("-g")
+        if i2 < len(sys.argv) - 1 and "-" not in sys.argv[index+1]:
+            grammar_file = sys.argv[i2+1]
+            sys.argv.remove(grammar_file)
+        sys.argv.remove("-g")
+    print("-g: grammar file loaded from ", grammar_file)
+    
     # STEP 1 - PARSING
     print("\n############ Parsing input data ############")
     p = Parser(grammar_file)
@@ -249,9 +258,18 @@ def main():
         s.optimize_cosine()
         print("\n######## Running feature extraction ########")
         f = FeatureExtraction(s.train, s.test, verbose)
+        
+        
+        
     else:
         print("\n######## Running feature extraction ########")
         f = FeatureExtraction(p.parsed_inkml, None, verbose)
+    
+        x,y = f.get_cov_xy(p.parsed_inkml,verbose)
+        print(x)
+        print('')
+        print(y)
+        
     
     # STEP 4 - CLASSIFICATION
     c = Classifier(f.get_fake_data()[0], f.get_fake_data()[1], default_out, testing, verbose)
