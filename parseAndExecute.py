@@ -2,10 +2,11 @@ import xml.etree.ElementTree as ET
 import os
 import sys
 import ntpath
-import matplotlib.pyplot as plt 
+import subprocess
 from split import *
 from features import *
 from classifier import *
+
 
 class Trace():
     """ This class represents a trace of (x,y) coordinates within a single symbol """
@@ -18,26 +19,14 @@ class Trace():
         for xy_point in xy:
             tempx.append(xy_point.lstrip().split()[0])
             tempy.append(xy_point.lstrip().split()[1])
-        self.x = list(map(float,tempx))
-        self.y = list(map(float,tempy))
+        self.x = list(map(float, tempx))
+        self.y = list(map(float, tempy))
 
-    #taken from Kenny's code
-    def getBoundaries(self):
-        minX = self.x[0]
-        maxX = self.x[0]
-        minY = self.y[0]
-        maxY = self.y[0]
-        for x in self.x:
-            if x < minX:
-                minX = x
-            if x > maxX:
-                maxX = x
-        for y in self.y:
-            if y < minY:
-                minY = y
-            if y > maxY:
-                maxY = y
-        return minX, maxX, minY, maxY
+    def get_boundaries(self):
+        x = np.asarray(self.x)
+        y = np.asarray(self.y)
+        return np.amin(x), np.amax(x), np.amin(y), np.amax(y)
+
 
 class Symbol():
     """ This class represents a single Symbol to be classified """
@@ -48,28 +37,27 @@ class Symbol():
         self.trace_list = trace_list
 
     def print_traces(self):
-        xTemp, yTemp = self.get_all_points()
+        x, y = self.get_all_points()
         plt.figure()
-        plt.scatter(xTemp, yTemp)
+        plt.scatter(x, y)
         plt.pause(3)
         plt.close()
         #rescaled coordinates
-        boundSquareLen=1
-        x,y = self.get_all_points()
+        boundSquareLen = 1
         f = FeatureExtraction(None, None, None)
-        xTrans, yTrans = f.rescale_points(x,y,1)
+        x_trans, y_trans = f.rescale_points(x, y, 1)
         plt.figure()
-        plt.scatter(xTrans, yTrans)
+        plt.scatter(x_trans, y_trans)
         plt.pause(3)
         plt.close()
     
     def get_all_points(self):
-        xTemp = []
-        yTemp = []
+        xtemp = []
+        ytemp = []
         for trace in self.trace_list:
-            xTemp.extend(trace.x)
-            yTemp.extend(trace.y)
-        return xTemp, yTemp
+            xtemp.extend(trace.x)
+            ytemp.extend(trace.y)
+        return xtemp, ytemp
     
         
 class InkmlFile():
@@ -77,8 +65,23 @@ class InkmlFile():
 
     def __init__(self, label, fname, symbol_list):
         self.label = label
-        self.fname = fname
+        self.fname = self.get_fname(fname)
+        # call the crohmeToLg tool in order to get the relationship info
         self.symbol_list = symbol_list
+        try:
+            perl_out = subprocess.check_output(["perl", "crohme2lg.pl", "-s", fname])
+            for line in perl_out:
+                print(perl_out)
+        except Exception as e:
+            print("Issue with processing", fname, "into .lg:", e)
+
+
+    @staticmethod
+    def get_fname(fname):
+        """ Returns the name only of a file without path or file extension """
+        head, tail = ntpath.split(fname)
+        nopath_name = tail or ntpath.basename(head)
+        return nopath_name.strip(".inkml")
 
 
 class Parser():
@@ -146,11 +149,9 @@ class Parser():
             for annotation in root.findall('inkml:annotation', ns):
                 if annotation.attrib['type'] == 'truth':
                     label = annotation.text
+            # create the inkml class to hold the data
+            inkmlfilelist.append(InkmlFile(label, filename, symbollist))
 
-            # get just the last part of the path for the filename
-            head, tail = ntpath.split(filename)
-            fname = tail or ntpath.basename(head)
-            inkmlfilelist.append(InkmlFile(label, fname.strip(".inkml"), symbollist))
         # store the results
         self.parsed_inkml = inkmlfilelist
 
