@@ -43,7 +43,7 @@ class Classifier():
         clf = clf.fit(self.train_data, self.train_target)
         self.classifiers = [("1-NN", knn), ("Boosted decision trees", bdt), ("Random foresT", clf)]
 
-    def test_classifiers(self, test_data, test_targ=None):
+    def test_classifiers(self, test_data, test_targ=None, inkml=None, outdir=None):
         """
         Tests the classifiers trained above on the testing target data.
         If target output is provided then a confusion matrix is created
@@ -53,6 +53,8 @@ class Classifier():
             out = classifier[1].predict(test_data)
             if test_targ is not None:
                 self.print_confusion(test_targ, out)
+            print(inkml)
+            print(outdir)
 
     def print_confusion(self, target, out):
         """

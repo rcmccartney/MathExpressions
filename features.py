@@ -1,7 +1,10 @@
 __author__ = 'mccar_000'
-import matplotlib.pyplot as plt
+
 import numpy as np
 import scipy.interpolate as sp
+import warnings
+warnings.simplefilter("error")
+
 
 class FeatureExtraction():
     """
@@ -9,54 +12,45 @@ class FeatureExtraction():
     a 2D array of features and a 1D array of output classes
     """
 
-    def __init__(self, train, test, verbose):
-        self.train = train
-        self.test = test
+    def __init__(self, verbose):
         self.verbose = verbose
-        self.x = []  # 2d array of features
-        self.y = []  # 1d array of class values
 
-    def get_fake_data(self):
+    @staticmethod
+    def rescale_points(xlist, ylist, bound_square_len=1):
         """
-        used to test the flow of the system
+        this method rescales and centers all points to a bounding box of bound_square_length
         """
-        x = [[1, 2, 3, 4], [10, 9, 8, 7]]
-        y = [0, 1]
-        return x,y
-        
-    #scale all points to a 1 x 1 square boundingbox
-    def rescale_points(self, xList, yList, boundSquareLen=1):
-        xMin = min(xList)
-        yMin = min(yList)
-        xRange = max(xList) - min(xList)
-        yRange = max(yList) - min(yList)
-        if xRange > yRange:
-            divScale = xRange/float(boundSquareLen)
+        xmin = min(xlist)
+        xmax = max(xlist)
+        ymin = min(ylist)
+        ymax = max(ylist)
+        xrange = xmax - xmin
+        yrange = ymax - ymin
+        div_scale = max(xrange, yrange)
+        if div_scale > 0:
+            x_trans = [(bound_square_len*0.5*(div_scale - xmin - xmax) + x)/div_scale for x in xlist]
+            y_trans = [(bound_square_len*0.5*(div_scale - ymin - ymax) + y)/div_scale for y in ylist]
         else:
-            divScale = yRange/float(boundSquareLen)
-        xTrans = [(x-xMin)/divScale for x in xList]
-        yTrans = [(y-yMin)/divScale for y in yList]
-        return xTrans, yTrans
-                
-    def resample_points(self, xList, yList, multIncrease):
-        f1 = sp.interp1d(range(0,len(xList)),xList,kind = 'linear')
-        f2 = sp.interp1d(range(0,len(yList)),yList,kind = 'linear')
-        
-        new_tseries = np.linspace(0, len(xList)-1, len(xList)*multIncrease)
-        return f1(new_tseries),f2(new_tseries)
-    
-    def convert_to_image(self, xList, yList, pixelAxis = 100):
-        x_trans, y_trans = self.rescale_points(xList, yList, 1)
-        x_res, y_res = self.resample_points(x_trans,y_trans,10)
-        x_res_np = np.array(x_res)*pixelAxis
-        y_res_np = np.array(y_res)*pixelAxis
-        print(x_res_np.astype(int))
-        print(y_res_np.astype(int))
-        image_mat = np.zeros([pixelAxis+1, pixelAxis+1])
-        image_mat[x_res_np.astype(int),y_res_np.astype(int)] = 1
+            x_trans = y_trans = [bound_square_len/2]
+        return x_trans, y_trans
+
+    @staticmethod
+    def resample_points(xlist, ylist, mult_increase):
+        f1 = sp.interp1d(range(0, len(xlist)), xlist, kind='linear')
+        f2 = sp.interp1d(range(0, len(ylist)), ylist, kind='linear')
+        new_tseries = np.linspace(0, len(xlist)-1, len(xlist)*mult_increase)
+        return f1(new_tseries), f2(new_tseries)
+
+    @staticmethod
+    def convert_to_image(xlist, ylist, pixel_axis=20):
+        x, y = FeatureExtraction.rescale_points(xlist, ylist)
+        x, y = FeatureExtraction.resample_points(x, y, 100)
+        x_res_np = np.around(np.array(x)*pixel_axis)
+        y_res_np = np.around(np.array(y)*pixel_axis)
+        image_mat = np.zeros([pixel_axis+1, pixel_axis+1])
+        image_mat[x_res_np.astype(int), pixel_axis - y_res_np.astype(int)] = 1
         return image_mat
-        
-    
+
     def get_aspect_ratio(self, symbol, verbose):        
         xMin, xMax, yMin, yMax = 9999,-9999,9999,-9999
         for trace in symbol.trace_list:
@@ -67,7 +61,10 @@ class FeatureExtraction():
             yMax = max(yMax, yMaxTemp)
         w = abs(xMax-xMin)
         h = abs(yMax-yMin)
-        ratio = w/h
+        if h != 0:
+            ratio = w/h
+        else:
+            ratio = 1
         x = [ratio]
         return x
     

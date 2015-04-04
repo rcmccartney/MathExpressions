@@ -3,6 +3,7 @@ import os
 import sys
 import ntpath
 import subprocess
+import matplotlib.pyplot as plt
 from split import *
 from features import *
 from classifier import *
@@ -72,10 +73,11 @@ class InkmlFile():
         # call the crohmeToLg tool in order to get the relationship info
         self.symbol_list = symbol_list
         try:
-            perl_out = subprocess.check_output(["perl", "crohme2lg.pl", "-s", fname])
+            pass
+            #perl_out = subprocess.check_output(["perl", "crohme2lg.pl", "-s", fname])
             # decode the binary that is returned into a string
-            string_out = perl_out.decode("utf-8")
-            self.relations = string_out[string_out.index("# Relations"):]
+            #string_out = perl_out.decode("utf-8")
+            #self.relations = string_out[string_out.index("# Relations"):]
         except Exception as e:
             print("Issue with processing", fname, "into .lg:", e)
 
@@ -99,9 +101,10 @@ class Parser():
         self.parsed_inkml = []
         try:
             i = 0
-            for line in open(grammar_file):
-                self.grammar[line.strip()] = i
-                i += 1
+            with open(grammar_file) as f:
+                for line in f:
+                    self.grammar[line.strip()] = i
+                    i += 1
         except IOError:
             print("Error: no grammar or symbol list found. Please ensure you have listSymbolsPart4-revised.txt"
                   " in the current directory or have specified a different symbol list")
@@ -184,7 +187,7 @@ def print_usage():
     print("  -l [filelist.txt]   : operate on the files listed in the specified text file")
     print("  -o [outdir]         : specify the output directory for .lg files")
     print("  -v [int]            : turn on verbose output [1=minimal, 2=maximal]")
-    print("  -g                  : specify grammar file location")
+    print("  -g [file]           : specify grammar file location")
     sys.exit(1)
 
 @profile
@@ -266,38 +269,39 @@ def main():
         s = Split(p.parsed_inkml, p.grammar, verbose)
         s.optimize_cosine()
         print("\n######## Running feature extraction ########")
-        f = FeatureExtraction(s.train, s.test, verbose)
+        f = FeatureExtraction(verbose)
         if verbose == 2:
             for inkmlFile in s.train:
                 for symbol in inkmlFile.symbol_list:
                     symbol.print_traces()
-            for inkmlFile in s.train:
-                for symbol in inkmlFile.symbol_list:
-                    symbol_mat = np.zeros([101, 101])
-                    for trace in symbol.trace_list:
-                        trace_mat = f.convert_to_image(trace.x,trace.y)
-                        symbol_mat = np.add(symbol_mat,trace_mat)
+        for inkmlFile in s.train:
+            for symbol in inkmlFile.symbol_list:
+                for trace in symbol.trace_list:
+                    trace_mat = f.convert_to_image(trace.x, trace.y)
+                    print(inkmlFile.fname, symbol.label, trace.id)
+                    print(trace_mat)
                     fig = plt.figure()
                     ax = fig.add_subplot(1,1,1)
                     ax.set_aspect('equal')
-                    plt.imshow(symbol_mat)
+                    plt.imshow(trace_mat)
                     plt.show()
         xgrid_train, ytclass_train, inkmat_train = f.get_feature_set(s.train, verbose)
         xgrid_test, ytclass_test, inkmat_test = f.get_feature_set(s.test, verbose)
-        
+
     else:
         print("\n######## Running feature extraction ########")
-        f = FeatureExtraction(p.parsed_inkml, None, verbose)
+        f = FeatureExtraction(verbose)
         xgrid_test, ytclass_test, inkmat_test = f.get_feature_set(p.parsed_inkml, verbose)
 
-    # STEP 4 - CLASSIFICATION
+    # STEP 4 - CLASSIFICATION and WRITING LG FILES
     if not testing:
         print("\n########## Training the classifier #########")
         c = Classifier(train_data=xgrid_train, train_targ=ytclass_train, grammar=p.grammar, verbose=verbose)
+        c.test_classifiers(xgrid_train, test_targ=ytclass_train, inkml=inkmat_train, outdir=default_lg_out + "train\\")
     else:
         c = Classifier(param_file=default_param_out)
     print("\n########## Running classification ##########")
-    c.test_classifiers(xgrid_test, ytclass_test)
+    c.test_classifiers(xgrid_test, test_targ=ytclass_test, inkml=inkmat_test, outdir=default_lg_out + "test\\")
 
 
 if __name__ == '__main__':
