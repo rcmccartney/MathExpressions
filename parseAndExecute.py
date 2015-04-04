@@ -76,6 +76,7 @@ class InkmlFile():
             # decode the binary that is returned into a string
             string_out = perl_out.decode("utf-8")
             self.relations = string_out[string_out.index("# Relations"):]
+            print(self.relations)
         except Exception as e:
             print("Issue with processing", fname, "into .lg:", e)
 
@@ -162,7 +163,6 @@ class Parser():
 
     def print_results(self):
         """ Prints all of the files parsed by the system """
-
         for file in self.parsed_inkml:
             print("file:", file.label, "filename", file.fname)
             for symbol in file.symbol_list:
@@ -278,10 +278,9 @@ def main():
                 ax.set_aspect('equal')
                 plt.imshow(symbol_mat)
                 plt.show()
-                
-        exit()
-        xgrid_train,ytclass_train,inkmat_train = f.get_feature_set(s.train,verbose)
-        xgrid_test,ytclass_test,inkmat_test = f.get_feature_set(s.test,verbose)
+
+        xgrid_train, ytclass_train,inkmat_train = f.get_feature_set(s.train, verbose)
+        xgrid_test, ytclass_test, inkmat_test = f.get_feature_set(s.test, verbose)
         
     else:
         print("\n######## Running feature extraction ########")

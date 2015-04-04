@@ -109,5 +109,5 @@ class FeatureExtraction():
                 
                 x_grid.append(x)
                 y_true_class.append(symbol.label_index)
-                inkml_file_ref.append([inkml_file,symbol.labelXML])
+                inkml_file_ref.append([inkml_file, symbol.labelXML])
         return x_grid,y_true_class,inkml_file_ref
