@@ -276,10 +276,9 @@ def main():
                     symbol.print_traces()
         for inkmlFile in s.train:
             for symbol in inkmlFile.symbol_list:
-                for trace in symbol.trace_list:
-                    trace_mat = f.convert_and_plot(trace.x, trace.y)
-                    print(inkmlFile.fname, symbol.label, trace.id)
-                    print(trace_mat)
+                trace_mat = f.convert_and_plot(symbol.trace_list, 20)
+                print(inkmlFile.fname, symbol.label)
+                print(trace_mat)
         xgrid_train, ytclass_train, inkmat_train = f.get_feature_set(s.train, verbose)
         xgrid_test, ytclass_test, inkmat_test = f.get_feature_set(s.test, verbose)
 
