@@ -1,6 +1,10 @@
 __author__ = 'mccar_000'
 
 import numpy as np
+import matplotlib.colors as colors
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+import math
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
 
@@ -36,37 +40,67 @@ class Classifier():
         return None
 
 
-def plot_data(X, type="tsne", figure_no=1):
+def plot_data(data, target, num_classes, type="feat", f1=0, f2=1, figure_no=1):
     """ Plots the data onto any figure number supplied using t-SNE or PCA if desired """
 
-    if type == "tsne":
-        model = TSNE(n_components=2, random_state=0)
-        X = model.fit_transform(self.X)
-    elif type == "pca":
-        X = PCA(n_components=2).fit_transform(X)
-
-
-    # separate the classes for plotting
-    data_c0 = self.X[np.where(self.Y == 0)]
-    data_c1 = self.X[np.where(self.Y == 1)]
+    x = np.asarray(data)
+    y = np.asarray(target)
+    k = list(colors.cnames.keys())
     plt.figure(figure_no)
-    plt.scatter(data_c0[:, 1], data_c0[:, 2], s=80, facecolors='none', edgecolors='blue', label="Class 0")
-    plt.scatter(data_c1[:, 1], data_c1[:, 2], s=80, facecolors='none', edgecolors='orange', label="Class 1")
-    plt.xlabel("x1")
-    plt.xlim([self.min[0], self.max[0]])
-    plt.ylabel("x2")
-    plt.ylim([self.min[1], self.max[1]])
-    # Place a legend above this legend, expanding itself to fully use the given bounding box.
-    plt.legend(scatterpoints=1, bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=2, mode="expand", borderaxespad=0.)
+    ax = plt.subplot(121)
+
+    if type == "tsne":
+        plt.suptitle("Plotted with T-SNE algorithm for dimensionality reduction")
+        model = TSNE(n_components=2, random_state=0)
+        feat = model.fit_transform(x)
+    elif type == "pca":
+        plt.suptitle("Plotted with PCA algorithm for dimensionality reduction")
+        feat = PCA(n_components=2).fit_transform(x)
+    else:  # type=="feat"
+        plt.suptitle("Plotted using features " + str(f1) + " and " + str(f2))
+        feat = x[:, [f1, f2]]
+
+    mins = np.amin(feat, axis=0)
+    maxs = np.amax(feat, axis=0)
+    ax.set_xlim([mins[0], maxs[0]])
+    ax.set_ylim([mins[1], maxs[1]])
+    # separate the classes for plotting by color
+    for i in range(num_classes):
+        class_data = feat[np.where(y == i)]
+        ax.scatter(class_data[:, 0], class_data[:, 1], s=80, color=k[i])
+    add_color(k, num_classes, figure_no)
     plt.show()
 
 
-def print_confusion(conf_mat, num_elems):
+def add_color(colorlist, num, figure_no):
+    """ Plots the colors being used along with a class label """""
+    plt.figure(figure_no)
+    ax = plt.subplot(122)
+    ratio = 1.0 / 3.0
+    count = math.ceil(math.sqrt(num))
+    x_count = count * ratio
+    y_count = count / ratio
+    x = 0
+    y = 0
+    w = 1 / x_count
+    h = 1 / y_count
+    for i in range(num):
+        pos = (x / x_count, y / y_count)
+        ax.add_patch(patches.Rectangle(pos, w, h, color=colorlist[i]))
+        ax.annotate("class " + str(i), xy=pos)
+        if y >= y_count-1:
+            x += 1
+            y = 0
+        else:
+            y += 1
+
+
+def print_confusion(conf_mat):
     """
     Prints confusion matrix in nice formatting
     """
     conf_mat = np.asarray(conf_mat)
-    print("Classification rate: {:.2f}%".format(100*(np.trace(conf_mat) / num_elems)))
+    print("Classification rate: {:.2f}%".format(100*(np.trace(conf_mat) / np.sum(conf_mat))))
     print("Targ/Out  0", end=" ")
     for i in range(1, conf_mat.shape[0]):
         print("{:9d}".format(i), end=" ")
@@ -75,3 +109,15 @@ def print_confusion(conf_mat, num_elems):
         for j in range(conf_mat.shape[1]):
             print("{:9d}".format(conf_mat[i, j]), end=" ")
     print()
+
+
+def test():
+    data = np.load("classifiers/data.npy")
+    x = np.asarray(data[:, :-1])
+    y = np.asarray(data[:, -1])
+    plot_data(x, y, 2, type="pca")
+    plot_data(x, y, 2)
+
+
+if __name__ == "__main__":
+    test()
