@@ -37,82 +37,57 @@ class FeatureExtraction():
         yTrans = [(y-yMin)/divScale for y in yList]
         return xTrans, yTrans
                 
-    def get_aspect_ratio(self, inkmlList, verbose):        
-        self.inkmlList = inkmlList
-        self.verbose = verbose
-        
-        x = []
-        y = []
-        for inkmlFile in self.inkmlList:
-            for symbol in inkmlFile.symbol_list:
-                
-                xMin, xMax, yMin, yMax = 9999,-9999,9999,-9999
-                for trace in symbol.trace_list:
-                    xMinTemp, xMaxTemp, yMinTemp, yMaxTemp = trace.get_boundaries()
-                    xMin = min(xMin, xMinTemp)
-                    xMax = max(xMax, xMaxTemp)
-                    yMin = min(yMin, yMinTemp)
-                    yMax = max(yMax, yMaxTemp)
-                w = abs(xMax-xMin)
-                h = abs(yMax-yMin)
-                ratio = w/h
-                x.append([ratio])
-                y.append([symbol.label_index])
-        return x,y
-  
-    def get_number_strokes(self, inkmlList, verbose):
-        self.inkmlList = inkmlList
-        self.verbose = verbose
-        
-        x = []
-        y = []
-        for inkmlFile in self.inkmlList:
-            for symbol in inkmlFile.symbol_list:
-                x.append([len(symbol.trace_list)])
-                y.append([symbol.label_index])
-        return x,y
+    def get_aspect_ratio(self, symbol, verbose):        
+        xMin, xMax, yMin, yMax = 9999,-9999,9999,-9999
+        for trace in symbol.trace_list:
+            xMinTemp, xMaxTemp, yMinTemp, yMaxTemp = trace.get_boundaries()
+            xMin = min(xMin, xMinTemp)
+            xMax = max(xMax, xMaxTemp)
+            yMin = min(yMin, yMinTemp)
+            yMax = max(yMax, yMaxTemp)
+        w = abs(xMax-xMin)
+        h = abs(yMax-yMin)
+        ratio = w/h
+        x = [ratio]
+        return x
     
-    def get_mean_x(self, inkmlList, verbose):
-        self.inkmlList = inkmlList
-        self.verbose = verbose
-        x=[]
-        y=[]
-        for inkmlFile in self.inkmlList:
-            for symbol in inkmlFile.symbol_list:
-                xTemp,yTemp = symbol.get_all_points()
-                xTrans,yTrans = self.rescale_points(xTemp,yTemp)
-                x.append([sum(xTrans)/float(len(xTrans))])
-                y.append([symbol.label_index])
-        return x,y
+    def get_mean_x(self, symbol, verbose):
+        xTemp,yTemp = symbol.get_all_points()
+        xTrans,yTrans = self.rescale_points(xTemp,yTemp)
+        x = [sum(xTrans)/float(len(xTrans))]
+        return x
         
-    def get_mean_y(self, inkmlList, verbose):
-        self.inkmlList = inkmlList
-        self.verbose = verbose
-        x=[]
-        y=[]
-        for inkmlFile in self.inkmlList:
-            for symbol in inkmlFile.symbol_list:
-                xTemp,yTemp = symbol.get_all_points()
-                xTrans,yTrans = self.rescale_points(xTemp,yTemp)
-                x.append([sum(yTrans)/float(len(yTrans))])
-                y.append([symbol.label_index])
-        return x,y
+    def get_mean_y(self, symbol, verbose):
+        xTemp,yTemp = symbol.get_all_points()
+        xTrans,yTrans = self.rescale_points(xTemp,yTemp)
+        x = [sum(yTrans)/float(len(yTrans))]
+        return x
         
-    def get_cov_xy(self, inkmlList, verbose):
-        self.inkmlList = inkmlList
-        self.verbose = verbose
-        x=[]
-        y=[]
-        for inkmlFile in self.inkmlList:
-            for symbol in inkmlFile.symbol_list:
-                xTemp,yTemp = symbol.get_all_points()
-                xTrans,yTrans = self.rescale_points(xTemp,yTemp)
-                cov = np.cov(xTrans,yTrans)
-                x.append(cov.flatten().tolist())
-                y.append([symbol.label_index])
-        return x,y
+    def get_cov_xy(self, symbol, verbose):
+        xTemp,yTemp = symbol.get_all_points()
+        xTrans,yTrans = self.rescale_points(xTemp,yTemp)
+        cov = np.cov(xTrans,yTrans)
+        x = cov.flatten().tolist()
+        return x
         
-    def compose_feature_matrix(self, inkmlList, verbose):
-        self.inkmlList = inkmlList
-        self.verbose = verbose
+    def get_number_strokes(self, symbol, verbose):
+        x = [len(symbol.trace_list)]
+        return x
         
+    def get_feature_set(self,inkml_file_list,verbose):
+        x_grid = []
+        y_true_class = []
+        inkml_file_ref = []
+        for inkml_file in inkml_file_list:
+            for symbol in inkml_file.symbol_list:
+                x = []
+                x.extend(self.get_number_strokes(symbol,verbose))
+                x.extend(self.get_cov_xy(symbol,verbose))
+                x.extend(self.get_mean_x(symbol,verbose))
+                x.extend(self.get_mean_y(symbol,verbose))
+                x.extend(self.get_aspect_ratio(symbol,verbose))
+                
+                x_grid.append(x)
+                y_true_class.append(symbol.label_index)
+                inkml_file_ref.append([inkml_file,symbol.labelXML])
+        return x_grid,y_true_class,inkml_file_ref

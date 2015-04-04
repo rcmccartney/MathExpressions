@@ -7,7 +7,7 @@ import matplotlib.patches as patches
 import math
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
-
+from classifiers.KnnClassifier import KnnClassifier
 
 class Classifier():
     """ This class is a wrapper around whatever classifiers are implemented for the inkml classification """
@@ -27,10 +27,10 @@ class Classifier():
         self.testing = testing
         self.verbose = verbose
 
-    def knn(self):
+    def knn(self, k, test_data, test_target=None):
         c = KnnClassifier(self.data, self.target)
         print("** 1-nn **")
-        c.k_near(1)
+        c.k_near(k, test_data, test_target)
         print_confusion(c.confusion, c.X.shape[0])
 
     @staticmethod
@@ -113,6 +113,7 @@ def print_confusion(conf_mat):
 
 def test():
     data = np.load("classifiers/data.npy")
+    print(data)
     x = np.asarray(data[:, :-1])
     y = np.asarray(data[:, -1])
     plot_data(x, y, 2, type="pca")

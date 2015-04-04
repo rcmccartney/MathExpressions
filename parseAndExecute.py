@@ -31,8 +31,9 @@ class Trace():
 class Symbol():
     """ This class represents a single Symbol to be classified """
 
-    def __init__(self, label, label_index, trace_list):
+    def __init__(self, label, labelXML, label_index, trace_list):
         self.label = label
+        self.labelXML = labelXML
         self.label_index = label_index
         self.trace_list = trace_list
 
@@ -131,6 +132,7 @@ class Parser():
             symbollist = []
             toptracegroup = root.find('inkml:traceGroup', ns)
             for subTraceGroup in toptracegroup.findall('inkml:traceGroup', ns):  # for each symbol
+                annotationXML = subTraceGroup.find('inkml:annotationXML',ns).attrib['href']
                 annotation = subTraceGroup.find('inkml:annotation', ns).text
                 if annotation is None:
                     annotation = "No_Label"
@@ -143,7 +145,7 @@ class Parser():
                 # find what index this symbol corresponds to
                 assert annotation in self.grammar, "Error: " + annotation + " is not defined in the grammar"
                 label_index = self.grammar[annotation]
-                symbollist.append(Symbol(annotation, label_index, tracelist))
+                symbollist.append(Symbol(annotation, annotationXML, label_index, tracelist))
 
             #generate class for equation
             label = ""
@@ -259,23 +261,20 @@ def main():
         print("\n######## Running feature extraction ########")
         f = FeatureExtraction(s.train, s.test, verbose)
         
-        
+        xgrid_train,ytclass_train,inkmat_train = f.get_feature_set(s.train,verbose)
+        xgrid_test,ytclass_test,inkmat_test = f.get_feature_set(s.test,verbose)
         
     else:
         print("\n######## Running feature extraction ########")
         f = FeatureExtraction(p.parsed_inkml, None, verbose)
-    
-        x,y = f.get_cov_xy(p.parsed_inkml,verbose)
-        print(x)
-        print('')
-        print(y)
         
     
     # STEP 4 - CLASSIFICATION
     c = Classifier(f.get_fake_data()[0], f.get_fake_data()[1], default_out, testing, verbose)
     if not testing:
         print("\n########## Training the classifier #########")
-
+        c1 = Classifier(xgrid_train, ytclass_train, "knntraintemp.txt", False, False)
+        c1.knn(1, np.asarray(xgrid_test), np.asarray(ytclass_test))
     print("\n########## Running classification ##########")
 
 
