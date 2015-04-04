@@ -180,6 +180,7 @@ def print_usage():
     print("  -d [dir1 dir2...]   : operate on the specified directories")
     print("  -f [file1 file2...] : operate on the specified files")
     print("  -l [filelist.txt]   : operate on the files listed in the specified text file")
+    print("  -o [dir]            : specify the output directory for the classified .lg files")
     print("  -v                  : turn on verbose output")
     sys.exit(1)
 
@@ -193,7 +194,8 @@ def main():
 
     testing = True
     verbose = False
-    default_out = "params.txt"
+    default_params_out = "params.txt"
+    default_lg_out = "output\\"
     # :TODO allow grammar to be taken on command line
     grammar_file = "listSymbolsPart4-revised.txt"
 
@@ -262,7 +264,7 @@ def main():
     #################################
     # STEP 4 - CLASSIFICATION
     #################################
-    c = Classifier(f.get_fake_data()[0], f.get_fake_data()[1], default_out, testing, verbose)
+    c = Classifier(f.get_fake_data()[0], f.get_fake_data()[1], default_params_out, testing, verbose)
     if not testing:
         print("\n########## Training the classifier #########")
 
@@ -271,6 +273,8 @@ def main():
     #################################
     # STEP 6 - GENERATE .LG FILES
     #################################
+    g = generate_lg(p.parsed_inkml)
+
 
 if __name__ == '__main__':
     main()
