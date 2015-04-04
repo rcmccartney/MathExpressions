@@ -17,44 +17,53 @@ class FeatureExtraction():
         self.verbose = verbose
 
     @staticmethod
-    def rescale_points(xlist, ylist, bound_square_len=1):
+    def rescale_and_resample(trace_list, bound_square_len=1, mult_increase=200):
         """
         this method rescales and centers all points to a bounding box of bound_square_length
         """
-        xmin = min(xlist)
-        xmax = max(xlist)
-        ymin = min(ylist)
-        ymax = max(ylist)
+        xmin = ymin = float("inf")
+        xmax = ymax = float("-inf")
+        for trace in trace_list:
+            if min(trace.x) < xmin: xmin = min(trace.x)
+            if max(trace.x) > xmax: xmax = max(trace.x)
+            if min(trace.y) < ymin: ymin = min(trace.y)
+            if max(trace.y) > ymax: ymax = max(trace.y)
         xrange = xmax - xmin
         yrange = ymax - ymin
         div_scale = max(xrange, yrange)
+        all_x = []
+        all_y = []
         if div_scale > 0:
-            x_trans = [(bound_square_len*0.5*(div_scale - xmin - xmax) + x)/div_scale for x in xlist]
-            y_trans = [(bound_square_len*0.5*(div_scale - ymin - ymax) + y)/div_scale for y in ylist]
+            for trace in trace_list:
+                new_x = [(bound_square_len*0.5*(div_scale - xmin - xmax) + x)/div_scale for x in trace.x]
+                new_y = [(bound_square_len*0.5*(div_scale - ymin - ymax) + y)/div_scale for y in trace.y]
+                xlist, ylist = FeatureExtraction.resample_points(new_x, new_y, mult_increase)
+                all_x.extend(xlist)
+                all_y.extend(ylist)
         else:
-            x_trans = y_trans = [bound_square_len/2]
-        return x_trans, y_trans
+            all_x = [bound_square_len/2]
+            all_y = [bound_square_len/2]
+        return all_x, all_y
 
     @staticmethod
-    def resample_points(xlist, ylist, mult_increase):
+    def resample_points(xlist, ylist, mult_increase=200):
         f1 = sp.interp1d(range(0, len(xlist)), xlist, kind='linear')
         f2 = sp.interp1d(range(0, len(ylist)), ylist, kind='linear')
         new_tseries = np.linspace(0, len(xlist)-1, len(xlist)*mult_increase)
         return f1(new_tseries), f2(new_tseries)
 
     @staticmethod
-    def convert_to_image(xlist, ylist, pixel_axis=20):
-        x, y = FeatureExtraction.rescale_points(xlist, ylist)
-        x, y = FeatureExtraction.resample_points(x, y, 100)
+    def convert_to_image(trace_list, pixel_axis=20):
+        x, y = FeatureExtraction.rescale_and_resample(trace_list)
         x_res_np = np.around(np.array(x)*pixel_axis)
         y_res_np = np.around(np.array(y)*pixel_axis)
         image_mat = np.zeros([pixel_axis+1, pixel_axis+1])
-        image_mat[ y_res_np.astype(int), x_res_np.astype(int)] = 1
+        image_mat[y_res_np.astype(int), x_res_np.astype(int)] = 1
         return image_mat
 
     @staticmethod
-    def convert_and_plot(xlist, ylist, pixel_axis=20):
-        trace_mat = FeatureExtraction.convert_to_image(xlist, ylist, pixel_axis)
+    def convert_and_plot(trace_list, pixel_axis=20):
+        trace_mat = FeatureExtraction.convert_to_image(trace_list, pixel_axis)
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1)
         ax.set_aspect('equal')
