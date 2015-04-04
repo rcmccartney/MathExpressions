@@ -2,11 +2,11 @@ import xml.etree.ElementTree as ET
 import os
 import sys
 import ntpath
-import matplotlib.pylab as plt
 import subprocess
 from split import *
 from features import *
 from classifier import *
+from profilehooks17.profilehooks import *
 
 
 class Trace():
@@ -188,7 +188,7 @@ def print_usage():
     print("  -g                  : specify grammar file location")
     sys.exit(1)
 
-
+@profile
 def main():
     """
     This is the pipeline of the system
@@ -228,10 +228,11 @@ def main():
         print("-t : training the classifier and saving parameters to", default_param_out)
     else:
         if "-p" in sys.argv:
-            i = sys.argv.index("-p")
-            default_out = sys.argv[i + 1]
+            index = sys.argv.index("-p")
+            if index < len(sys.argv) - 1 and "-" not in sys.argv[index+1]:
+                default_param_out = sys.argv[index + 1]
+                sys.argv.remove(default_param_out)
             sys.argv.remove("-p")
-            sys.argv.remove(default_out)
             print("-p set,", end=" ")
         print("-t not set : testing the classifier from parameters saved in", default_param_out)
 
