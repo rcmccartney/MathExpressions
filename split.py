@@ -67,7 +67,7 @@ class Split():
               "and ending value", best_s, "after", iterations, "iterations")
         print("Training set contains", len(self.train), "instances and test set contains",
               len(self.test), "instances")
-        if self.verbose:
+        if self.verbose == 1:
             print("Gram : ", end="")
             self.print_grammar()
             print("Train: ", end="")

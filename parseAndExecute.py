@@ -79,7 +79,6 @@ class InkmlFile():
         except Exception as e:
             print("Issue with processing", fname, "into .lg:", e)
 
-
     @staticmethod
     def get_fname(fname):
         """ Returns the name only of a file without path or file extension """
@@ -184,7 +183,7 @@ def print_usage():
     print("  -f [file1 file2...] : operate on the specified files")
     print("  -l [filelist.txt]   : operate on the files listed in the specified text file")
     print("  -o [outdir]         : specify the output directory for .lg files")
-    print("  -v                  : turn on verbose output")
+    print("  -v [int]            : turn on verbose output [1=minimal, 2=maximal]")
     print("  -g                  : specify grammar file location")
     sys.exit(1)
 
@@ -199,15 +198,18 @@ def main():
         print_usage()
 
     testing = True
-    verbose = False
+    verbose = 0
     default_param_out = "params.txt"
     default_lg_out = ".\\output\\"
     grammar_file = "listSymbolsPart4-revised.txt"
 
     print("Running", sys.argv[0])
     if "-v" in sys.argv:
-        print("-v : using verbose output")
-        verbose = True
+        index = sys.argv.index("-v")
+        if index < len(sys.argv) - 1 and "-" not in sys.argv[index+1]:
+            verbose = int(sys.argv[index+1])
+            sys.argv.remove(sys.argv[index+1])
+        print("-v : using verbose output level", verbose)
         sys.argv.remove("-v")
     if "-g" in sys.argv:  # setting grammar file location
         index = sys.argv.index("-g")
@@ -254,7 +256,7 @@ def main():
     else:
         print_usage()
     print("Parsed", len(p.parsed_inkml), "InkML files")
-    if verbose:
+    if verbose == 2:
         p.print_results()
 
     # STEP 2 - SPLITTING (ONLY FOR TRAINING) AND
@@ -265,7 +267,7 @@ def main():
         s.optimize_cosine()
         print("\n######## Running feature extraction ########")
         f = FeatureExtraction(s.train, s.test, verbose)
-        if verbose:
+        if verbose == 2:
             for inkmlFile in s.train:
                 for symbol in inkmlFile.symbol_list:
                     symbol.print_traces()
