@@ -49,7 +49,7 @@ class FeatureExtraction():
         x_res_np = np.around(np.array(x)*pixel_axis)
         y_res_np = np.around(np.array(y)*pixel_axis)
         image_mat = np.zeros([pixel_axis+1, pixel_axis+1])
-        image_mat[x_res_np.astype(int), pixel_axis - y_res_np.astype(int)] = 1
+        image_mat[ y_res_np.astype(int), x_res_np.astype(int)] = 1
         return image_mat
 
     @staticmethod
