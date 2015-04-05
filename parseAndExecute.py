@@ -3,7 +3,6 @@ import os
 import sys
 import ntpath
 import subprocess
-import matplotlib.pyplot as plt
 from split import *
 from features import *
 from classifier import *
@@ -13,8 +12,8 @@ from profilehooks17.profilehooks import *
 class Trace():
     """ This class represents a trace of (x,y) coordinates within a single symbol """
 
-    def __init__(self, id, point_list):
-        self.id = id
+    def __init__(self, tid, point_list):
+        self.id = tid
         tempx = []
         tempy = []
         xy = point_list.split(',')
@@ -40,20 +39,7 @@ class Symbol():
         self.trace_list = trace_list
 
     def print_traces(self):
-        x, y = self.get_all_points()
-        plt.figure()
-        plt.scatter(x, y)
-        plt.pause(3)
-        plt.close()
-        #rescaled coordinates
-        f = FeatureExtraction(False)
-        x_trans, y_trans = f.rescale_points(x, y, 1)
-        x_interp, y_interp = f.resample_points(x_trans, y_trans, 5)
-        plt.figure()
-        plt.scatter(x_trans, y_trans)
-        plt.scatter(x_interp, y_interp)
-        plt.pause(3)
-        plt.close()
+        FeatureExtraction.convert_and_plot(self.trace_list)
     
     def get_all_points(self):
         xtemp = []
@@ -116,7 +102,6 @@ class Parser():
         and saves results into self.parsed_inkml
         :param filelist: the files to parse as a list of Strings
         """
-
         ns = {'inkml': 'http://www.w3.org/2003/InkML'}
         inkmlfilelist = []
 
@@ -124,14 +109,12 @@ class Parser():
             with open(filename, 'r') as filexml:
                 tree = ET.parse(filexml)
             root = tree.getroot()
-
             # get all traces for eqn
             tracelisttemp = {}
             for trace in root.findall('inkml:trace', ns):
                 traceid = int(trace.attrib['id'])
                 #generate list of (x,y)
                 tracelisttemp[traceid] = Trace(traceid, trace.text)
-
             #get all symbols
             symbollist = []
             toptracegroup = root.find('inkml:traceGroup', ns)
@@ -143,14 +126,13 @@ class Parser():
                 #get tracelist for symbol
                 traceviewlisttemp = []
                 for traceview in subTraceGroup.findall('inkml:traceView', ns):
-                    id = int(traceview.attrib['traceDataRef'])
-                    traceviewlisttemp.append(id)
+                    tid = int(traceview.attrib['traceDataRef'])
+                    traceviewlisttemp.append(tid)
                 tracelist = [tracelisttemp[k] for k in traceviewlisttemp]  # trace subset for symbol
                 # find what index this symbol corresponds to
                 assert annotation in self.grammar, "Error: " + annotation + " is not defined in the grammar"
                 label_index = self.grammar[annotation]
                 symbollist.append(Symbol(annotation, annotationXML, label_index, tracelist))
-
             #generate class for equation
             label = ""
             for annotation in root.findall('inkml:annotation', ns):
@@ -158,7 +140,6 @@ class Parser():
                     label = annotation.text
             # create the inkml class to hold the data
             inkmlfilelist.append(InkmlFile(label, filename, symbollist))
-
         # store the results
         self.parsed_inkml = inkmlfilelist
 
@@ -177,7 +158,6 @@ class Parser():
 
 def print_usage():
     """ Prints correct usage of the program and exits """
-
     print("$ python3 parseInkml [flag] [arguments]")
     print("flags:")
     print("  -t <params.txt>     : train classifier with optional output file (no flag set will perform testing)")
@@ -189,6 +169,7 @@ def print_usage():
     print("  -v [int]            : turn on verbose output [1=minimal, 2=maximal]")
     print("  -g [file]           : specify grammar file location")
     sys.exit(1)
+
 
 @profile
 def main():
@@ -262,38 +243,34 @@ def main():
     if verbose == 2:
         p.print_results()
 
-    # STEP 2 - SPLITTING (ONLY FOR TRAINING) AND
-    # STEP 3 - FEATURE EXTRACTION
+    # TRAINING PATH OF EXECTION
     if not testing:
+        # STEP 2 - SPLITTING
         print("\n########### Splitting input data ###########")
         s = Split(p.parsed_inkml, p.grammar, verbose)
         s.optimize_cosine()
+        # STEP 3 - FEATURE EXTRACTION
         print("\n######## Running feature extraction ########")
         f = FeatureExtraction(verbose)
         if verbose == 2:
             for inkmlFile in s.train:
                 for symbol in inkmlFile.symbol_list:
-                    symbol.print_traces()
-        for inkmlFile in s.train:
-            for symbol in inkmlFile.symbol_list:
-                trace_mat = f.convert_and_plot(symbol.trace_list, 20)
-                print(inkmlFile.fname, symbol.label)
-                print(trace_mat)
+                    print(inkmlFile.fname, symbol.label)
+                    f.convert_and_plot(symbol.trace_list)
         xgrid_train, ytclass_train, inkmat_train = f.get_feature_set(s.train, verbose)
         xgrid_test, ytclass_test, inkmat_test = f.get_feature_set(s.test, verbose)
-
+        # STEP 4 - CLASSIFICATION AND WRITING LG FILES FOR TRAINING SET
+        print("\n########## Training the classifier #########")
+        c = Classifier(train_data=xgrid_train, train_targ=ytclass_train, grammar=p.grammar, verbose=verbose)
+        c.test_classifiers(xgrid_train, test_targ=ytclass_train, inkml=inkmat_train, outdir=default_lg_out + "train\\")
+    # TESTING PATH OF EXECUTION
     else:
         print("\n######## Running feature extraction ########")
         f = FeatureExtraction(verbose)
         xgrid_test, ytclass_test, inkmat_test = f.get_feature_set(p.parsed_inkml, verbose)
-
-    # STEP 4 - CLASSIFICATION and WRITING LG FILES
-    if not testing:
-        print("\n########## Training the classifier #########")
-        c = Classifier(train_data=xgrid_train, train_targ=ytclass_train, grammar=p.grammar, verbose=verbose)
-        c.test_classifiers(xgrid_train, test_targ=ytclass_train, inkml=inkmat_train, outdir=default_lg_out + "train\\")
-    else:
         c = Classifier(param_file=default_param_out)
+
+    # STEP 4 - CLASSIFICATION AND WRITING LG FILES FOR TESTING SET
     print("\n########## Running classification ##########")
     c.test_classifiers(xgrid_test, test_targ=ytclass_test, inkml=inkmat_test, outdir=default_lg_out + "test\\")
 

@@ -92,8 +92,9 @@ class FeatureExtraction():
         plt.show()
         return trace_mat
 
-    def get_aspect_ratio(self, symbol, verbose):        
-        xMin, xMax, yMin, yMax = float("inf"),float("-inf"),float("inf"),float("-inf")
+    @staticmethod
+    def get_aspect_ratio(symbol):
+        xMin, xMax, yMin, yMax = float("inf"), float("-inf"), float("inf"), float("-inf")
         for trace in symbol.trace_list:
             xMinTemp, xMaxTemp, yMinTemp, yMaxTemp = trace.get_boundaries()
             xMin = min(xMin, xMinTemp)
@@ -106,25 +107,24 @@ class FeatureExtraction():
             ratio = w/h
         else:
             ratio = 1
-        x = [ratio]
+        return [ratio]
+
+    @staticmethod
+    def get_mean(vec):
+        return [sum(vec)/len(vec)]
+
+    @staticmethod
+    def get_cov_xy(xtrans, ytrans):
+        if (len(xtrans) > 1):
+            # this will fail otherwise for single points that don't have a covariance
+            x = np.cov(xtrans, ytrans).flatten().tolist()
+        else:
+            x = [0, 0, 0, 0]
         return x
-    
-    def get_mean_x(self, xtrans, verbose):
-        x = [sum(xtrans)/float(len(xtrans))]
-        return x
-        
-    def get_mean_y(self, ytrans, verbose):
-        x = [sum(ytrans)/float(len(ytrans))]
-        return x
-        
-    def get_cov_xy(self, xtrans, ytrans, verbose):
-        cov = np.cov(xtrans,ytrans)
-        x = cov.flatten().tolist()
-        return x
-        
-    def get_number_strokes(self, symbol, verbose):
-        x = [len(symbol.trace_list)]
-        return x
+
+    @staticmethod
+    def get_number_strokes(symbol):
+        return [len(symbol.trace_list)]
         
     def get_feature_set(self, inkml_file_list, verbose):
         x_grid = []
@@ -132,13 +132,14 @@ class FeatureExtraction():
         inkml_file_ref = []
         for inkml_file in inkml_file_list:
             for symbol in inkml_file.symbol_list:
-                xtrans,ytrans = self.rescale_and_resample(symbol.trace_list)
+                xtrans, ytrans = self.rescale_and_resample(symbol.trace_list)
+                ## ONLINE FEATURES ##
                 x = []
-                x.extend(self.get_number_strokes(symbol,verbose))
-                x.extend(self.get_cov_xy(xtrans,ytrans,verbose))
-                x.extend(self.get_mean_x(xtrans,verbose))
-                x.extend(self.get_mean_y(ytrans,verbose))
-                x.extend(self.get_aspect_ratio(symbol,verbose))
+                x.extend(self.get_number_strokes(symbol))
+                x.extend(self.get_cov_xy(xtrans, ytrans))
+                x.extend(self.get_mean(xtrans))
+                x.extend(self.get_mean(ytrans))
+                x.extend(self.get_aspect_ratio(symbol))
                 x_grid.append(x)
                 y_true_class.append(symbol.label_index)
                 inkml_file_ref.append([inkml_file, symbol.labelXML])
