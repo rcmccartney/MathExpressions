@@ -32,11 +32,12 @@ class Trace():
 class Symbol():
     """ This class represents a single Symbol to be classified """
 
-    def __init__(self, label, labelXML, label_index, trace_list):
+    def __init__(self, num_in_inkml, label, labelXML, label_index, trace_list):
         self.label = label
         self.labelXML = labelXML
         self.label_index = label_index
         self.trace_list = trace_list
+        self.num_in_inkml = num_in_inkml
 
     def print_traces(self):
         FeatureExtraction.convert_and_plot(self.trace_list)
@@ -56,10 +57,11 @@ class InkmlFile():
     def __init__(self, label, fname, symbol_list):
         self.label = label
         self.fname = self.get_fname(fname)
-        # call the crohmeToLg tool in order to get the relationship info
         self.symbol_list = symbol_list
+        self.class_decisions = [0]*len(symbol_list)
+        # call the crohmeToLg tool in order to get the relationship info
         try:
-            pass
+            self.relations = None
             #perl_out = subprocess.check_output(["perl", "crohme2lg.pl", "-s", fname])
             # decode the binary that is returned into a string
             #string_out = perl_out.decode("utf-8")
@@ -74,6 +76,20 @@ class InkmlFile():
         nopath_name = tail or ntpath.basename(head)
         return nopath_name.strip(".inkml")
 
+    def print_it(self, directory, grammar_inv):
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        with open(os.path.join(directory, self.fname + ".lg"), "w") as f:
+            f.write("# " + self.label + " (Object format)\n")
+            f.write("# " + str(len(self.symbol_list)) + " objects (symbols)\n")
+            f.write("# FORMAT:\n")
+            f.write("# O, Object ID, Label, Weight, List of Primitive IDs (strokes in a symbol)\n")
+            for i in range(len(self.symbol_list)):
+                f.write("O, " + self.symbol_list[i].labelXML + ", " + grammar_inv[self.class_decisions[i]] +
+                        ", 1.0," + "jie add\n")
+            if self.relations is not None:
+                f.write("\n" + self.relations)
+
 
 class Parser():
     """ This class reads the grammar file and parses the input files """
@@ -85,12 +101,15 @@ class Parser():
         """
         self.verbose = verbose
         self.grammar = {}
+        self.grammar_inv = {}
         self.parsed_inkml = []
         try:
             i = 0
             with open(grammar_file) as f:
                 for line in f:
-                    self.grammar[line.strip()] = i
+                    sym = line.strip()
+                    self.grammar[sym] = i
+                    self.grammar_inv[i] = sym
                     i += 1
         except IOError:
             print("Error: no grammar or symbol list found. Please ensure you have listSymbolsPart4-revised.txt"
@@ -107,6 +126,7 @@ class Parser():
         inkmlfilelist = []
 
         for filename in filelist:
+            num_in_inkml = 0
             with open(filename, 'r') as filexml:
                 tree = ET.parse(filexml)
             root = tree.getroot()
@@ -142,7 +162,8 @@ class Parser():
                 # find what index this symbol corresponds to
                 assert annotation in self.grammar, "Error: " + annotation + " is not defined in the grammar"
                 label_index = self.grammar[annotation]
-                symbollist.append(Symbol(annotation, annotationXML, label_index, tracelist))
+                symbollist.append(Symbol(num_in_inkml, annotation, annotationXML, label_index, tracelist))
+                num_in_inkml += 1
             #generate class for equation
             label = ""
             for annotation in root.findall('inkml:annotation', ns):
@@ -272,20 +293,13 @@ def main():
                 for symbol in inkmlFile.symbol_list:
                     print(inkmlFile.fname, symbol.label)
                     f.convert_and_plot(symbol.trace_list)
-        for inkmlFile in s.train:
-                i = 0
-                for symbol in inkmlFile.symbol_list:
-                    loc = os.path.join(os.path.realpath("images"), inkmlFile.fname + "_" + str(i) + "_" +
-                                       str(symbol.label_index) + ".img")
-                    i += 1
-                    np.savetxt(loc, f.convert_to_image(symbol.trace_list, pixel_axis=50))
 
         xgrid_train, ytclass_train, inkmat_train = f.get_feature_set(s.train, verbose)
         xgrid_test, ytclass_test, inkmat_test = f.get_feature_set(s.test, verbose)
         # STEP 4 - CLASSIFICATION AND WRITING LG FILES FOR TRAINING SET
         print("\n########## Training the classifier #########")
-        c = Classifier(train_data=xgrid_train, train_targ=ytclass_train, grammar=p.grammar, verbose=verbose,
-                        outdir=os.path.join(default_lg_out, "test"))
+        c = Classifier(train_data=xgrid_train, train_targ=ytclass_train, inkml=inkmat_train,
+                       grammar=p.grammar_inv, verbose=verbose, outdir=default_lg_out)
     # TESTING PATH OF EXECUTION
     else:
         print("\n######## Running feature extraction ########")
@@ -295,8 +309,8 @@ def main():
 
     # STEP 4 - CLASSIFICATION AND WRITING LG FILES FOR TESTING SET
     print("\n########## Running classification ##########")
-    c.test_classifiers(xgrid_test, test_targ=ytclass_test, inkml=inkmat_test,
-                       outdir=os.path.join(default_lg_out, "test"))
+    c.test_classifiers(xgrid_test, test_targ=ytclass_test, inkml=inkmat_test)
+
 
 
 if __name__ == '__main__':

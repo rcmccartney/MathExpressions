@@ -4,6 +4,7 @@ import numpy as np
 import scipy.interpolate as sp
 import matplotlib.pyplot as plt
 import math
+from sklearn.decomposition import PCA
 #import warnings
 #warnings.simplefilter("error")
 
@@ -183,15 +184,23 @@ class FeatureExtraction():
         colwise = get_rowwise_crosses_maxmin(image_mat.transpose(),numregions,verbose)
         totalfeatures = rowwise + colwise
         return totalfeatures
-        
+
+    @staticmethod
+    def image_pca(images, components=10):
+        return PCA(n_components=components).fit_transform(images)
+
     def get_feature_set(self, inkml_file_list, verbose):
         x_grid = []
         y_true_class = []
         inkml_file_ref = []
+        pixel_axis = 20
+        size = (pixel_axis+1)*(pixel_axis+1)
+        images = np.empty((0, size), int)
         for inkml_file in inkml_file_list:
             for symbol in inkml_file.symbol_list:
                 xtrans, ytrans = self.rescale_and_resample(symbol.trace_list)
-                image = self.convert_to_image(symbol.trace_list)
+                image = self.convert_to_image(symbol.trace_list, pixel_axis=pixel_axis)
+                images = np.append(images, image.flatten().reshape([1, size]), axis=0)
                 ## ONLINE FEATURES ##
                 x = []
                 x.extend(self.get_number_strokes(symbol))
@@ -199,10 +208,13 @@ class FeatureExtraction():
                 x.extend(self.get_mean(xtrans))
                 x.extend(self.get_mean(ytrans))
                 x.extend(self.get_aspect_ratio(symbol))
-                x.extend(self.get_fuzzy_histogram_distance(xtrans,ytrans))
-                x.extend(self.get_all_crosses_maxmin(np.asmatrix(image),5))
-                x.extend(self.convert_to_image(symbol.trace_list, pixel_axis=10).flatten())
+                x.extend(self.get_fuzzy_histogram_distance(xtrans, ytrans))
+                x.extend(self.get_all_crosses_maxmin(np.asmatrix(image), 5))
+                #x.extend(image.flatten())
                 x_grid.append(x)
                 y_true_class.append(symbol.label_index)
-                inkml_file_ref.append([inkml_file, symbol.labelXML])
-        return x_grid,y_true_class,inkml_file_ref
+                inkml_file_ref.append((inkml_file, symbol))
+        ## OFFLINE FEATURES
+        all_data = np.append(np.asarray(x_grid), self.image_pca(images), 1)
+
+        return all_data, y_true_class, inkml_file_ref
