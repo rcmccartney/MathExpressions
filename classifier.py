@@ -5,11 +5,13 @@ from sklearn.ensemble import AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from neuralnet import *
+from sklearn import svm
+
 
 class Classifier():
     """ This class is a wrapper around whatever classifiers are implemented for the inkml classification """
 
-    def __init__(self, train_data=None, train_targ=None, grammar=None, verbose=None, param_file=None):
+    def __init__(self, outdir=None, train_data=None, train_targ=None, grammar=None, verbose=None, param_file=None):
         """
         :param param_file: the parameters to use if testing, or the location to save for training
         :param verbose: boolean to print verbose output for debugging
@@ -22,6 +24,7 @@ class Classifier():
             self.train_target = train_targ
             self.grammar = grammar
             self.classifiers = []
+            self.outdir = outdir
             self.train_classifiers(verbose)
 
     def train_classifiers(self, verbose):
@@ -40,23 +43,29 @@ class Classifier():
             self.print_confusion(self.train_target, bdt.predict(self.train_data))
         # Create and fit a random forest
         print("** Training Random Forest **")
-        rf = RandomForestClassifier(n_estimators=10)
+        rf = RandomForestClassifier(n_estimators=200)
         rf = rf.fit(self.train_data, self.train_target)
         if verbose == 1:
             self.print_confusion(self.train_target, rf.predict(self.train_data))
-        print("** Training Neural Network **")
-        ff = FFNeural(len(self.grammar))
-        ff.fit(self.train_data, self.train_target, 100)
-        if verbose == 1:
-            self.print_confusion(self.train_target, ff.predict(self.train_data))
+        #print("** Training Neural Network **")
+        #ff = FFNeural(len(self.grammar))
+        #ff.fit(self.train_data, self.train_target, 100)
+        #if verbose == 1:
+        #    self.print_confusion(self.train_target, ff.predict(self.train_data))
         #print("** Training LSTM **")
         #lstm = LSTMNeural(len(self.grammar))
         #lstm.fit(self.train_data, self.train_target, 100)
+        print("** Training SVM **")
+        rbf_svc = svm.SVC(kernel='rbf')
+        rbf_svc.fit(self.train_data, self.train_target)
+        if verbose == 1:
+            self.print_confusion(self.train_target, rf.predict(self.train_data))
         self.classifiers = [
                             ("1-NN", knn),
                             ("Boosted decision trees", bdt),
                             ("Random forest", rf),
-                            ("FF Neural Net", ff),
+                            ("SVM w/ RBF kernel", rbf_svc),
+                            #("FF Neural Net", ff),
                             #("LSTM net", lstm),
                             ]
 

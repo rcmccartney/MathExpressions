@@ -140,6 +140,7 @@ class FeatureExtraction():
                 x.extend(self.get_mean(xtrans))
                 x.extend(self.get_mean(ytrans))
                 x.extend(self.get_aspect_ratio(symbol))
+                x.extend(self.convert_to_image(symbol.trace_list, pixel_axis=10).flatten())
                 x_grid.append(x)
                 y_true_class.append(symbol.label_index)
                 inkml_file_ref.append([inkml_file, symbol.labelXML])

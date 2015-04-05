@@ -20,7 +20,6 @@ E
 f
 F
 g
-g
 G
 H
 h 

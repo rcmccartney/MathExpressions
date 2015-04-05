@@ -78,11 +78,12 @@ class InkmlFile():
 class Parser():
     """ This class reads the grammar file and parses the input files """
 
-    def __init__(self, grammar_file):
+    def __init__(self, verbose, grammar_file):
         """
         Initializes the parser for the Inkml files
         :param grammar_file: file containing the valid symbols to be classified
         """
+        self.verbose = verbose
         self.grammar = {}
         self.parsed_inkml = []
         try:
@@ -119,7 +120,10 @@ class Parser():
             symbollist = []
             toptracegroup = root.find('inkml:traceGroup', ns)
             for subTraceGroup in toptracegroup.findall('inkml:traceGroup', ns):  # for each symbol
-                annotationXML = subTraceGroup.find('inkml:annotationXML',ns).attrib['href']
+                try:
+                    annotationXML = subTraceGroup.find('inkml:annotationXML', ns).attrib['href']
+                except:
+                    print("Error in", filename)
                 annotation = subTraceGroup.find('inkml:annotation', ns).text
                 if annotation is None:
                     annotation = "No_Label"
@@ -171,7 +175,7 @@ def print_usage():
     sys.exit(1)
 
 
-@profile
+#@profile
 def main():
     """
     This is the pipeline of the system
@@ -184,7 +188,7 @@ def main():
     testing = True
     verbose = 0
     default_param_out = "params.txt"
-    default_lg_out = ".\\output\\"
+    default_lg_out = os.path.realpath("output")
     grammar_file = "listSymbolsPart4-revised.txt"
 
     print("Running", sys.argv[0])
@@ -224,7 +228,7 @@ def main():
 
     # STEP 1 - PARSING
     print("\n############ Parsing input data ############")
-    p = Parser(grammar_file)
+    p = Parser(verbose, grammar_file)
     if sys.argv[1] == "-f":  # operate on files
         p.parse(sys.argv[2:])
     elif sys.argv[1] == "-d":  # operate on directories
@@ -234,8 +238,13 @@ def main():
                 filelist.append(os.path.join(arg, filename))
         p.parse(filelist)
     elif sys.argv[1] == "-l":  # operate on a filelist
+        path = os.path.dirname(os.path.realpath(sys.argv[2]))
+        print(path)
+        flist = []
         f = open(sys.argv[2])
-        p.parse(f.readlines())
+        for line in f:
+            flist.append(os.path.join(path, os.path.normcase(line.strip())))
+        p.parse(flist)
         f.close()
     else:
         print_usage()
@@ -261,7 +270,8 @@ def main():
         xgrid_test, ytclass_test, inkmat_test = f.get_feature_set(s.test, verbose)
         # STEP 4 - CLASSIFICATION AND WRITING LG FILES FOR TRAINING SET
         print("\n########## Training the classifier #########")
-        c = Classifier(train_data=xgrid_train, train_targ=ytclass_train, grammar=p.grammar, verbose=verbose)
+        c = Classifier(train_data=xgrid_train, train_targ=ytclass_train, grammar=p.grammar, verbose=verbose,
+                        outdir=os.path.join(default_lg_out, "test"))
     # TESTING PATH OF EXECUTION
     else:
         print("\n######## Running feature extraction ########")
@@ -271,7 +281,8 @@ def main():
 
     # STEP 4 - CLASSIFICATION AND WRITING LG FILES FOR TESTING SET
     print("\n########## Running classification ##########")
-    c.test_classifiers(xgrid_test, test_targ=ytclass_test, inkml=inkmat_test, outdir=default_lg_out + "test\\")
+    c.test_classifiers(xgrid_test, test_targ=ytclass_test, inkml=inkmat_test,
+                       outdir=os.path.join(default_lg_out, "test"))
 
 
 if __name__ == '__main__':
