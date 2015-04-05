@@ -1,61 +1,45 @@
 __author__ = 'mccar_000'
 
 import os
+import pickle
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from classifierImplementations import *
 from sklearn import svm
-
+from sklearn.externals import joblib
 
 class Classifier():
     """ This class is a wrapper around whatever classifiers are implemented for the inkml classification """
 
     def __init__(self, outdir=None, train_data=None, train_targ=None, grammar=None, verbose=None,
-                 inkml=None, param_file=None):
+                 inkml=None, param_dir=None, model="rf", testing=False):
         """
         :param param_file: the parameters to use if testing, or the location to save for training
         :param verbose: boolean to print verbose output for debugging
         """
+        self.grammar = grammar
+        self.inkml = inkml
         self.verbose = verbose
-        if param_file is not None:
-            self.load_saved_classifiers()
+        self.classifiers = []
+        self.outdir = outdir
+        self.param_dir = param_dir
+
+        if testing:
+            self.load_saved_classifier(param_dir, model)
         else:
             self.train_data = train_data
             self.train_target = train_targ
-            self.grammar = grammar
-            self.classifiers = []
-            self.outdir = outdir
-            self.train_classifiers(inkml, verbose)
+            self.train_classifiers()
 
-    def train_classifiers(self, inkml, verbose):
+    def train_classifiers(self):
         """ Trains the classifiers being used.  Modify this to introduce other classifiers """
 
-        print("** Training 1-nn **")
-        knn = KnnClassifier(k=1)
-        knn.fit(self.train_data, self.train_target)
-        out = knn.predict(self.train_data)
-        self.make_lg(out, inkml, os.path.join(self.outdir, "train", "1nn"))
-        if verbose == 1:
-            self.print_confusion(self.train_target, out)
-
-        print("** Training AdaBoost **")
-        # Create and fit an AdaBoosted decision tree
-        bdt = AdaBoostClassifier(DecisionTreeClassifier(max_depth=8),
-                                 algorithm="SAMME", n_estimators=200)
-        bdt.fit(self.train_data, self.train_target)
-        out = bdt.predict(self.train_data)
-        self.make_lg(out, inkml, os.path.join(self.outdir, "train", "bdt"))
-        if verbose == 1:
-            self.print_confusion(self.train_target, out)
-
-        print("** Training Random Forest **")
-        rf = RandomForestClassifier(n_estimators=200)
-        rf.fit(self.train_data, self.train_target)
-        out = rf.predict(self.train_data)
-        self.make_lg(out, inkml, os.path.join(self.outdir, "train", "rf"))
-        if verbose == 1:
-            self.print_confusion(self.train_target, out)
+        self.train_classifier("1-nn", "1nn", KnnClassifier(k=1))
+        self.train_classifier("AdaBoost", "bdt",  AdaBoostClassifier(DecisionTreeClassifier(max_depth=8),
+                                 algorithm="SAMME", n_estimators=200))
+        self.train_classifier("Random Forest", "rf", RandomForestClassifier(n_estimators=200))
+        self.train_classifier("SVM w/ RBF kernel", "rbf_svm", svm.SVC(kernel='rbf'))
 
         #print("** Training Neural Network **")
         #ff = FFNeural(len(self.grammar))
@@ -66,23 +50,6 @@ class Classifier():
         #lstm = LSTMNeural(len(self.grammar))
         #lstm.fit(self.train_data, self.train_target, 100)
 
-        print("** Training SVM **")
-        rbf_svc = svm.SVC(kernel='rbf')
-        rbf_svc.fit(self.train_data, self.train_target)
-        out = rbf_svc.predict(self.train_data)
-        self.make_lg(out, inkml, os.path.join(self.outdir, "train", "rbf_svm"))
-        if verbose == 1:
-            self.print_confusion(self.train_target, out)
-
-        self.classifiers = [
-                            ("1-NN", "1nn", knn),
-                            ("Boosted decision trees", "bdt", bdt),
-                            ("Random forest", "rf", rf),
-                            ("SVM w/ RBF kernel", "rbf_svm", rbf_svc),
-                            #("FF Neural Net", ff),
-                            #("LSTM net", lstm),
-                            ]
-
     def make_lg(self, output, inkml, dirname):
         # fill in the inkmls with this output decision
         for i in range(len(output)):
@@ -91,6 +58,21 @@ class Classifier():
         # now write each inkml out
         for inkml_file in inkml:
             inkml_file[0].print_it(dirname, self.grammar)
+
+    def train_classifier(self, name, shorthand, model):
+        print("** Training " + name + " **")
+        model.fit(self.train_data, self.train_target)
+        filename = os.path.join(self.param_dir, shorthand + ".pkl")
+        if shorthand == "1nn":
+            pickle.dump(model, filename, pickle.HIGHEST_PROTOCOL)
+        else:
+            joblib.dump(model, filename)
+        out = model.predict(self.train_data)
+        self.make_lg(out, self.inkml, os.path.join(self.outdir, "train", shorthand))
+        self.classifiers.append((name, shorthand, model))
+        if self.verbose == 1:
+            self.print_confusion(self.train_target, out)
+
 
     def test_classifiers(self, test_data, test_targ=None, inkml=None):
         """
@@ -125,7 +107,7 @@ class Classifier():
                     print("{:4d}".format(conf_mat[i, j]), end=" ")
             print()
 
-    def load_saved_classifiers(self):
-        # :TODO load saved classifier parameters
+    def load_saved_classifier(self, param_loc, model):
         """ this loads the saved parameters from the last training of the system """
-        self.classifiers = []
+        clf = os.path.join(param_loc, model)
+        self.classifiers = [ clf ]
