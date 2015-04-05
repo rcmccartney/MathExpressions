@@ -9,6 +9,9 @@ ehthumbs.db
 __pycache__/
 */__pycache__/
 
+# too large, 2 GB of data
+images/
+
 # Folder config file
 Desktop.ini
 
