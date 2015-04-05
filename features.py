@@ -4,8 +4,8 @@ import numpy as np
 import scipy.interpolate as sp
 import matplotlib.pyplot as plt
 import math
-import warnings
-warnings.simplefilter("error")
+#import warnings
+#warnings.simplefilter("error")
 
 
 class FeatureExtraction():

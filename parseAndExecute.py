@@ -6,7 +6,7 @@ import subprocess
 from split import *
 from features import *
 from classifier import *
-from profilehooks17.profilehooks import *
+#from profilehooks17.profilehooks import *
 
 
 class Trace():
@@ -121,9 +121,15 @@ class Parser():
             toptracegroup = root.find('inkml:traceGroup', ns)
             for subTraceGroup in toptracegroup.findall('inkml:traceGroup', ns):  # for each symbol
                 try:
-                    annotationXML = subTraceGroup.find('inkml:annotationXML', ns).attrib['href']
+                    annotationXMLelement = subTraceGroup.find('inkml:annotationXML',ns)
+                    if annotationXMLelement is None or annotationXMLelement.attrib['href'] is None:
+                        annotationXML = "No_Label"
+                    else:
+                        annotationXML = annotationXMLelement.attrib['href']
+                    
                 except:
                     print("Error in", filename)
+                    exit()
                 annotation = subTraceGroup.find('inkml:annotation', ns).text
                 if annotation is None:
                     annotation = "No_Label"
@@ -175,7 +181,7 @@ def print_usage():
     sys.exit(1)
 
 
-@profile
+#@profile
 def main():
     """
     This is the pipeline of the system
