@@ -34,7 +34,6 @@ class FFNeural():
     def predict(self, test_x, test_y=None):
         test_data = self.load_data(test_x, test_y, self.numclasses)
         results = self.trainer.testOnClassData(dataset=test_data)
-        print(results)
         if test_y is not None:
             tstresult = percentError(results, test_data['class'])
             print("Test percent error: %5.2f%%" % tstresult)
@@ -46,7 +45,10 @@ class FFNeural():
     def load_data(x, y, numclasses):
         data = ClassificationDataSet(len(x[0]), nb_classes=numclasses)
         for i in range(len(x)):
-            data.addSample(x[i], y[i])
+            if y is not None:
+                data.addSample(x[i], y[i])
+            else:
+                data.addSample(x[i], 0)  # this is for testing, output class doesn
         data._convertToOneOfMany(bounds=[0., 1.])  # changes output to vector of 0's and 1's
         return data
 

@@ -37,23 +37,25 @@ class Classifier():
                                  algorithm="SAMME", n_estimators=200)
         bdt.fit(self.train_data, self.train_target)
         if verbose == 1:
-            self.print_confusion(self.train_target, knn.predict(self.train_data))
+            self.print_confusion(self.train_target, bdt.predict(self.train_data))
         # Create and fit a random forest
         print("** Training Random Forest **")
-        clf = RandomForestClassifier(n_estimators=10)
-        clf = clf.fit(self.train_data, self.train_target)
+        rf = RandomForestClassifier(n_estimators=10)
+        rf = rf.fit(self.train_data, self.train_target)
         if verbose == 1:
-            self.print_confusion(self.train_target, knn.predict(self.train_data))
+            self.print_confusion(self.train_target, rf.predict(self.train_data))
         print("** Training Neural Network **")
         ff = FFNeural(len(self.grammar))
         ff.fit(self.train_data, self.train_target, 100)
+        if verbose == 1:
+            self.print_confusion(self.train_target, ff.predict(self.train_data))
         #print("** Training LSTM **")
         #lstm = LSTMNeural(len(self.grammar))
         #lstm.fit(self.train_data, self.train_target, 100)
         self.classifiers = [
                             ("1-NN", knn),
                             ("Boosted decision trees", bdt),
-                            ("Random forest", clf),
+                            ("Random forest", rf),
                             ("FF Neural Net", ff),
                             #("LSTM net", lstm),
                             ]

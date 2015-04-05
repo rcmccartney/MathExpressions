@@ -262,7 +262,6 @@ def main():
         # STEP 4 - CLASSIFICATION AND WRITING LG FILES FOR TRAINING SET
         print("\n########## Training the classifier #########")
         c = Classifier(train_data=xgrid_train, train_targ=ytclass_train, grammar=p.grammar, verbose=verbose)
-        c.test_classifiers(xgrid_train, test_targ=ytclass_train, inkml=inkmat_train, outdir=default_lg_out + "train\\")
     # TESTING PATH OF EXECUTION
     else:
         print("\n######## Running feature extraction ########")
