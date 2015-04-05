@@ -245,15 +245,6 @@ def main():
         sys.argv.remove("-o")
     else:
         print("-o not set: output will be sent to", default_lg_out)
-    if "-m" in sys.argv:
-        index = sys.argv.index("-m")
-        if index < len(sys.argv) - 1 and "-" not in sys.argv[index+1]:
-            model = sys.argv[index+1]
-            sys.argv.remove(model)
-            print("-m : using model", model)
-        sys.argv.remove("-m")
-    else:
-        print("-o not set: output will be sent to", default_lg_out)
     if "-g" in sys.argv:  # setting grammar file location
         index = sys.argv.index("-g")
         if index < len(sys.argv) - 1 and "-" not in sys.argv[index+1]:
@@ -284,6 +275,15 @@ def main():
             sys.argv.remove("-p")
             print("-p set,", end=" ")
         print("-t not set : testing the classifier from parameters saved in directory", default_param_out)
+    if "-m" in sys.argv:
+        index = sys.argv.index("-m")
+        if index < len(sys.argv) - 1 and "-" not in sys.argv[index+1]:
+            model = sys.argv[index+1]
+            sys.argv.remove(model)
+            print("-m : using model", model)
+        sys.argv.remove("-m")
+    elif testing:
+        print("-m not set: testing with", model)
 
     # STEP 1 - PARSING (if not saved)
     if not skip:
