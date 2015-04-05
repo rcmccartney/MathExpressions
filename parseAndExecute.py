@@ -195,13 +195,12 @@ def print_usage():
     """ Prints correct usage of the program and exits """
     print("$ python3 parseInkml [flag] [arguments]")
     print("flags:")
-    print("  -t [params]         : train classifier with optional directory to save the models "
-          "(no flag set will perform testing)")
+    print("  -t <model_dir>      : train classifier (no flag set will perform testing)")
     print("  -m [name]           : specify model to use for testing (inside params dir)")
-    print("                         Options: '1nn.pkl' - 1-nearest neighbor")
-    print("                                  'rf.pkl' - random forest")
-    print("                                  'bdt.pkl' - AdaBoost with decision tree weak learners")
-    print("                                  'rbf_svm.pkl' - SVM with RBF kernel")
+    print("      Options: '1nn.pkl' - 1-nearest neighbor")
+    print("               'rf.pkl' - random forest")
+    print("               'bdt.pkl' - AdaBoost with decision tree weak learners")
+    print("               'rbf_svm.pkl' - SVM with RBF kernel")
     print("  -p [params]         : load parameters for testing from params dir instead of default location")
     print("  -d [dir1 dir2...]   : operate on the specified directories")
     print("  -f [file1 file2...] : operate on the specified files")
@@ -209,7 +208,7 @@ def print_usage():
     print("  -o [outdir]         : specify the output directory for .lg files")
     print("  -v [int]            : turn on verbose output [1=minimal, 2=maximal]")
     print("  -g [file]           : specify grammar file location")
-
+    print("  -skip               : flag to skip the parsing step and load from parsed.pkl")
     sys.exit(1)
 
 #@profile
@@ -227,6 +226,7 @@ def main():
     default_lg_out = os.path.realpath("output")
     grammar_file = "listSymbolsPart4-revised.txt"
     model = "rf"
+    skip = False
 
     print("Running", sys.argv[0])
     if "-v" in sys.argv:
@@ -263,6 +263,10 @@ def main():
         print("-g: grammar file loaded from", grammar_file)
     else:
         print("-g not set: grammar file loaded from", grammar_file)
+    if "-skip" in sys.argv:
+        sys.argv.remove("-skip")
+        skip = True
+        print("Skipping parse step and loading from parsed.pkl")
     if "-t" in sys.argv:
         index = sys.argv.index("-t")
         if index < len(sys.argv) - 1 and "-" not in sys.argv[index+1]:
@@ -281,31 +285,39 @@ def main():
             print("-p set,", end=" ")
         print("-t not set : testing the classifier from parameters saved in directory", default_param_out)
 
-    # STEP 1 - PARSING
-    print("\n############ Parsing input data ############")
-    p = Parser(verbose, grammar_file)
-    if sys.argv[1] == "-f":  # operate on files
-        p.parse(sys.argv[2:])
-    elif sys.argv[1] == "-d":  # operate on directories
-        filelist = []
-        for arg in sys.argv[2:]:
-            for filename in os.listdir(arg):
-                filelist.append(os.path.join(arg, filename))
-        p.parse(filelist)
-    elif sys.argv[1] == "-l":  # operate on a filelist
-        path = os.path.dirname(os.path.realpath(sys.argv[2]))
-        print(path)
-        flist = []
-        f = open(sys.argv[2])
-        for line in f:
-            flist.append(os.path.join(path, os.path.normcase(line.strip())))
-        p.parse(flist)
-        f.close()
+    # STEP 1 - PARSING (if not saved)
+    if not skip:
+        print("\n############ Parsing input data ############")
+        p = Parser(verbose, grammar_file)
+        if sys.argv[1] == "-f":  # operate on files
+            p.parse(sys.argv[2:])
+        elif sys.argv[1] == "-d":  # operate on directories
+            filelist = []
+            for arg in sys.argv[2:]:
+                for filename in os.listdir(arg):
+                    filelist.append(os.path.join(arg, filename))
+            p.parse(filelist)
+        elif sys.argv[1] == "-l":  # operate on a filelist
+            path = os.path.dirname(os.path.realpath(sys.argv[2]))
+            print(path)
+            flist = []
+            f = open(sys.argv[2])
+            for line in f:
+                flist.append(os.path.join(path, os.path.normcase(line.strip())))
+            p.parse(flist)
+            f.close()
+        else:
+            print("Usage error:")
+            print_usage()
+        print("Parsed", len(p.parsed_inkml), "InkML files")
+        if verbose == 2:
+            p.print_results()
+        with open(os.path.relpath("parsed.pkl"), 'wb') as handle:
+            pickle.dump(p, handle, pickle.HIGHEST_PROTOCOL)
+    # LOAD SAVED PARSED FILE
     else:
-        print_usage()
-    print("Parsed", len(p.parsed_inkml), "InkML files")
-    if verbose == 2:
-        p.print_results()
+        with open(os.path.relpath("parsed.pkl"), 'rb') as handle:
+            p = pickle.load(handle)
 
     # TRAINING PATH OF EXECTION
     if not testing:
