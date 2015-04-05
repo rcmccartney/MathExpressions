@@ -126,6 +126,64 @@ class FeatureExtraction():
     def get_number_strokes(symbol):
         return [len(symbol.trace_list)]
         
+    @staticmethod
+    def get_fuzzy_histogram_distance(xlist, ylist, bound=20):
+        numgrid = 4
+        w = float(bound)/float(numgrid)
+        h = float(bound)/float(numgrid)
+        
+        grid = np.zeros([numgrid+1,numgrid+1])
+        for index in range(0,len(xlist)):
+            lowerx = int(math.floor(xlist[index]/w))
+            lowery = int(math.floor(ylist[index]/h))
+            gridx = [lowerx, lowerx+1, lowerx, lowerx+1]
+            gridy = [lowery, lowery, lowery+1, lowery+1]
+            for j in range(0,len(gridx)):
+                grid[gridx[j]][gridy[j]] += (w - abs(gridx[j]*w - xlist[index]))/w * (h - abs(gridy[j]*h - ylist[index]))/h
+        gridvector = grid.flatten().tolist()
+        return gridvector
+    
+    @staticmethod
+    def get_all_crosses_maxmin(image_mat, numregions=5, verbose=False):
+        def get_rowwise_crosses_maxmin(image_mat, numregions, verbose):
+            numrows, numcols = image_mat.shape
+            if numregions > numrows or numregions > numcols:
+                numregions = 1
+            
+            rowwidth = int(math.floor(numrows/numregions))
+            avelist = []
+            mincrosslist = []
+            maxcrosslist = []
+            for i in range(0,numrows,rowwidth):
+                subrows = image_mat[i:i+rowwidth,:]
+                ave = subrows.sum()/float(rowwidth)
+                
+                minindexsum = 0
+                maxindexsum = 0
+                for row in subrows:
+                    nonzero_indices = np.where(row != 0)[1]
+                    nonzero_indices = nonzero_indices.tolist()[0]
+                    if len(nonzero_indices) == 0:
+                        minInd = 0
+                        maxInd = len(subrows)-1
+                    else:
+                        minInd = np.amin(nonzero_indices)
+                        maxInd = np.amax(nonzero_indices)
+                    minindexsum += minInd
+                    maxindexsum += maxInd
+                minindexave = float(minindexsum)/float(len(subrows))
+                maxindexave = float(maxindexsum)/float(len(subrows))
+                avelist.append(ave)
+                mincrosslist.append(minindexave)
+                maxcrosslist.append(maxindexave)
+            featurelist = avelist + mincrosslist + maxcrosslist
+            return featurelist
+        
+        rowwise = get_rowwise_crosses_maxmin(image_mat,numregions,verbose)
+        colwise = get_rowwise_crosses_maxmin(image_mat.transpose(),numregions,verbose)
+        totalfeatures = rowwise + colwise
+        return totalfeatures
+        
     def get_feature_set(self, inkml_file_list, verbose):
         x_grid = []
         y_true_class = []
@@ -133,6 +191,7 @@ class FeatureExtraction():
         for inkml_file in inkml_file_list:
             for symbol in inkml_file.symbol_list:
                 xtrans, ytrans = self.rescale_and_resample(symbol.trace_list)
+                image = self.convert_to_image(symbol.trace_list)
                 ## ONLINE FEATURES ##
                 x = []
                 x.extend(self.get_number_strokes(symbol))
@@ -140,6 +199,9 @@ class FeatureExtraction():
                 x.extend(self.get_mean(xtrans))
                 x.extend(self.get_mean(ytrans))
                 x.extend(self.get_aspect_ratio(symbol))
+                x.extend(self.get_fuzzy_histogram_distance(xtrans,ytrans))
+                x.extend(self.get_all_crosses_maxmin(np.asmatrix(image),5))
+                print(x)
                 x_grid.append(x)
                 y_true_class.append(symbol.label_index)
                 inkml_file_ref.append([inkml_file, symbol.labelXML])
