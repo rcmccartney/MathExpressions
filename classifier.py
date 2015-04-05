@@ -1,10 +1,10 @@
 __author__ = 'mccar_000'
 
-from classifiers.KnnClassifier import *
+from KnnClassifier import *
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
-
+from neuralnet import *
 
 class Classifier():
     """ This class is a wrapper around whatever classifiers are implemented for the inkml classification """
@@ -14,6 +14,7 @@ class Classifier():
         :param param_file: the parameters to use if testing, or the location to save for training
         :param verbose: boolean to print verbose output for debugging
         """
+        self.verbose = verbose
         if param_file is not None:
             self.load_saved_classifiers()
         else:
@@ -28,20 +29,34 @@ class Classifier():
         print("** Training 1-nn **")
         knn = KnnClassifier(k=1)
         knn.fit(self.train_data, self.train_target)
-        if verbose:
+        if verbose == 1:
             self.print_confusion(self.train_target, knn.predict(self.train_data))
         print("** Training AdaBoost **")
         # Create and fit an AdaBoosted decision tree
-        bdt = AdaBoostClassifier(DecisionTreeClassifier(max_depth=3),
+        bdt = AdaBoostClassifier(DecisionTreeClassifier(max_depth=4),
                                  algorithm="SAMME", n_estimators=200)
         bdt.fit(self.train_data, self.train_target)
-        if verbose:
+        if verbose == 1:
             self.print_confusion(self.train_target, knn.predict(self.train_data))
         # Create and fit a random forest
         print("** Training Random Forest **")
         clf = RandomForestClassifier(n_estimators=10)
         clf = clf.fit(self.train_data, self.train_target)
-        self.classifiers = [("1-NN", knn), ("Boosted decision trees", bdt), ("Random foresT", clf)]
+        if verbose == 1:
+            self.print_confusion(self.train_target, knn.predict(self.train_data))
+        print("** Training Neural Network **")
+        ff = FFNeural(len(self.grammar))
+        ff.fit(self.train_data, self.train_target, 100)
+        #print("** Training LSTM **")
+        #lstm = LSTMNeural(len(self.grammar))
+        #lstm.fit(self.train_data, self.train_target, 100)
+        self.classifiers = [
+                            ("1-NN", knn),
+                            ("Boosted decision trees", bdt),
+                            ("Random forest", clf),
+                            ("FF Neural Net", ff),
+                            #("LSTM net", lstm),
+                            ]
 
     def test_classifiers(self, test_data, test_targ=None, inkml=None, outdir=None):
         """
@@ -53,8 +68,6 @@ class Classifier():
             out = classifier[1].predict(test_data)
             if test_targ is not None:
                 self.print_confusion(test_targ, out)
-            print(inkml)
-            print(outdir)
 
     def print_confusion(self, target, out):
         """
@@ -65,17 +78,17 @@ class Classifier():
             conf.append([0]*len(self.grammar))
         for i in range(len(target)):
             conf[target[i]][out[i]] += 1
-
         conf_mat = np.asarray(conf)
         print("Classification rate: {:.2f}%".format(100*(np.trace(conf_mat) / np.sum(conf_mat))))
-        print("Targ/Out", end=" ")
-        for i in range(conf_mat.shape[0]):
-            print("{:4d}".format(i), end=" ")
-        for i in range(conf_mat.shape[0]):
-            print("\n", "{:4d}".format(i), end="    ")
-            for j in range(conf_mat.shape[1]):
-                print("{:4d}".format(conf_mat[i, j]), end=" ")
-        print()
+        if self.verbose == 2:
+            print("Targ/Out", end=" ")
+            for i in range(conf_mat.shape[0]):
+                print("{:4d}".format(i), end=" ")
+            for i in range(conf_mat.shape[0]):
+                print("\n", "{:4d}".format(i), end="    ")
+                for j in range(conf_mat.shape[1]):
+                    print("{:4d}".format(conf_mat[i, j]), end=" ")
+            print()
 
     def load_saved_classifiers(self):
         # :TODO load saved classifier parameters
