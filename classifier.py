@@ -1,10 +1,9 @@
 __author__ = 'mccar_000'
 
-from KnnClassifier import *
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
-from neuralnet import *
+from classifierImplementations import *
 from sklearn import svm
 
 
