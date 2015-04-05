@@ -268,8 +268,9 @@ def main():
                     f.convert_and_plot(symbol.trace_list)
         for inkmlFile in s.train:
                 for symbol in inkmlFile.symbol_list:
-                    loc = os.path.join(os.path.relpath("images"), inkmlFile.fname, symbol.label)
-                    np.savetxt(loc, f.convert_to_image(symbol.trace_list))
+                    loc = os.path.join(os.path.realpath("images"), inkmlFile.fname + "_" + str(symbol.label_index) + ".img")
+                    np.savetxt(loc, f.convert_to_image(symbol.trace_list, pixel_axis=50))
+        exit(1)
         xgrid_train, ytclass_train, inkmat_train = f.get_feature_set(s.train, verbose)
         xgrid_test, ytclass_test, inkmat_test = f.get_feature_set(s.test, verbose)
         # STEP 4 - CLASSIFICATION AND WRITING LG FILES FOR TRAINING SET
