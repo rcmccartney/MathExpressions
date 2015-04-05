@@ -36,9 +36,9 @@ class FeatureExtraction():
         all_y = []
         if div_scale > 0:
             for trace in trace_list:
-                new_x = [(bound_square_len*0.5*(div_scale - xmin - xmax) + x)/div_scale for x in trace.x]
-                new_y = [(bound_square_len*0.5*(div_scale - ymin - ymax) + y)/div_scale for y in trace.y]
-                xlist, ylist = FeatureExtraction.resample_points_constDist(new_x, new_y, alpha)
+                new_x = [bound_square_len*(0.5*(div_scale - xmin - xmax) + x)/div_scale for x in trace.x]
+                new_y = [bound_square_len*(0.5*(div_scale - ymin - ymax) + y)/div_scale for y in trace.y]
+                xlist, ylist = FeatureExtraction.resample_points_const_dist(new_x, new_y, alpha)
                 all_x.extend(xlist)
                 all_y.extend(ylist)
         else:
@@ -47,42 +47,37 @@ class FeatureExtraction():
         return all_x, all_y
 
     @staticmethod
-    def resample_points_constTime(xlist, ylist, mult_increase=200):
+    def resample_points_const_time(xlist, ylist, mult_increase=200):
         f1 = sp.interp1d(range(0, len(xlist)), xlist, kind='linear')
         f2 = sp.interp1d(range(0, len(ylist)), ylist, kind='linear')
         new_tseries = np.linspace(0, len(xlist)-1, len(xlist)*mult_increase)
         return f1(new_tseries), f2(new_tseries)
 
     @staticmethod
-    def resample_points_constDist(xList, yList, alpha = 0.01):
-        acc_len = []
-        acc_len.append(0.0)
-        for i in range(1,len(xList)):
-            Li = acc_len[-1] + math.sqrt( math.pow((xList[i]-xList[i-1]),2) + math.pow((yList[i]-yList[i-1]),2))
-            acc_len.append(Li)
+    def resample_points_const_dist(xlist, ylist, alpha=0.01):
+        acc_len = [0.0]
+        for i in range(1, len(xlist)):
+            li = acc_len[-1] + math.sqrt(math.pow((xlist[i]-xlist[i-1]), 2) + math.pow((ylist[i]-ylist[i-1]), 2))
+            acc_len.append(li)
         m = math.floor(acc_len[-1]/alpha)
-        xListNew = []
-        yListNew = []
-        xListNew.append(xList[0])
-        yListNew.append(yList[0])
+        xlist_new = [xlist[0]]
+        ylist_new = [ylist[0]]
         j = 1
-        for p in range(1,(m-2)):
+        for p in range(1, (m-2)):
             while acc_len[j] < p*alpha:
                 j += 1
-            c = (p*alpha - acc_len[j-1])/(acc_len[j] - acc_len[j-1])
-            xNew = xList[j-1] + (xList[j]-xList[j-1])*c
-            yNew = yList[j-1] + (yList[j]-yList[j-1])*c
-            xListNew.append(xNew)
-            yListNew.append(yNew)
-        xListNew.append(xList[-1])
-        yListNew.append(yList[-1])
-        return xListNew, yListNew    
+            c = (p*alpha - acc_len[j-1]) / (acc_len[j] - acc_len[j-1])
+            xlist_new.append(xlist[j-1] + (xlist[j]-xlist[j-1])*c)
+            ylist_new.append(ylist[j-1] + (ylist[j]-ylist[j-1])*c)
+        xlist_new.append(xlist[-1])
+        ylist_new.append(ylist[-1])
+        return xlist_new, ylist_new
         
     @staticmethod
     def convert_to_image(trace_list, pixel_axis=20):
-        x, y = FeatureExtraction.rescale_and_resample(trace_list)
-        x_res_np = np.around(np.array(x)*pixel_axis)
-        y_res_np = np.around(np.array(y)*pixel_axis)
+        x, y = FeatureExtraction.rescale_and_resample(trace_list, bound_square_len=pixel_axis)
+        x_res_np = np.around(np.array(x))
+        y_res_np = np.around(np.array(y))
         image_mat = np.zeros([pixel_axis+1, pixel_axis+1])
         image_mat[y_res_np.astype(int), x_res_np.astype(int)] = 1
         return image_mat
