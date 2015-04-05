@@ -62,9 +62,12 @@ class Classifier():
     def train_classifier(self, name, shorthand, model):
         print("** Training " + name + " **")
         model.fit(self.train_data, self.train_target)
+        if not os.path.exists(self.param_dir):
+            os.makedirs(self.param_dir)
         filename = os.path.join(self.param_dir, shorthand + ".pkl")
         if shorthand == "1nn":
-            pickle.dump(model, filename, pickle.HIGHEST_PROTOCOL)
+            with open(filename, 'wb') as f:
+                pickle.dump(model, f, pickle.HIGHEST_PROTOCOL)
         else:
             joblib.dump(model, filename)
         out = model.predict(self.train_data)
@@ -109,5 +112,11 @@ class Classifier():
 
     def load_saved_classifier(self, param_loc, model):
         """ this loads the saved parameters from the last training of the system """
-        clf = os.path.join(param_loc, model)
-        self.classifiers = [ clf ]
+        file = os.path.join(param_loc, model)
+        if model == "1nn.pkl":
+            with open(file, 'rb') as handle:
+                clf = pickle.load(handle)
+        else:
+             clf = joblib.load(file)
+        name = model[:-4]  # gets rid of .pkl
+        self.classifiers = [("Loaded model " + name, name+"_unpickled", clf)]

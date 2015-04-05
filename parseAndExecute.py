@@ -62,10 +62,10 @@ class InkmlFile():
         # call the crohmeToLg tool in order to get the relationship info
         try:
             self.relations = None
-            #perl_out = subprocess.check_output(["perl", "crohme2lg.pl", "-s", fname])
+            perl_out = subprocess.check_output(["perl", "crohme2lg.pl", "-s", fname])
             # decode the binary that is returned into a string
-            #string_out = perl_out.decode("utf-8")
-            #self.relations = string_out[string_out.index("# Relations"):]
+            string_out = perl_out.decode("utf-8")
+            self.relations = string_out[string_out.index("# Relations"):]
         except Exception as e:
             print("Issue with processing", fname, "into .lg:", e)
 
@@ -85,8 +85,12 @@ class InkmlFile():
             f.write("# FORMAT:\n")
             f.write("# O, Object ID, Label, Weight, List of Primitive IDs (strokes in a symbol)\n")
             for i in range(len(self.symbol_list)):
+                strokes = ""
+                for trace in self.symbol_list[i].trace_list:
+                    strokes += str(trace.id) + ", "
+                strokes = strokes[:-2]  # cut off the last comma
                 f.write("O, " + self.symbol_list[i].labelXML + ", " + grammar_inv[self.class_decisions[i]] +
-                        ", 1.0," + "jie add\n")
+                        ", 1.0, " + strokes + "\n")
             if self.relations is not None:
                 f.write("\n" + self.relations)
 
@@ -191,32 +195,38 @@ def print_usage():
     """ Prints correct usage of the program and exits """
     print("$ python3 parseInkml [flag] [arguments]")
     print("flags:")
-    print("  -t <params.txt>     : train classifier with optional output file (no flag set will perform testing)")
-    print("  -p [params.txt]     : load parameters for testing from params.txt instead of default location")
+    print("  -t [params]         : train classifier with optional directory to save the models "
+          "(no flag set will perform testing)")
+    print("  -m [name]           : specify model to use for testing (inside params dir)")
+    print("                         Options: '1nn.pkl' - 1-nearest neighbor")
+    print("                                  'rf.pkl' - random forest")
+    print("                                  'bdt.pkl' - AdaBoost with decision tree weak learners")
+    print("                                  'rbf_svm.pkl' - SVM with RBF kernel")
+    print("  -p [params]         : load parameters for testing from params dir instead of default location")
     print("  -d [dir1 dir2...]   : operate on the specified directories")
     print("  -f [file1 file2...] : operate on the specified files")
     print("  -l [filelist.txt]   : operate on the files listed in the specified text file")
     print("  -o [outdir]         : specify the output directory for .lg files")
     print("  -v [int]            : turn on verbose output [1=minimal, 2=maximal]")
     print("  -g [file]           : specify grammar file location")
-    sys.exit(1)
 
+    sys.exit(1)
 
 #@profile
 def main():
     """
     This is the pipeline of the system
     """
-    # :TODO specify the output directory
 
     if len(sys.argv) < 3:
         print_usage()
 
     testing = True
     verbose = 0
-    default_param_out = "params.txt"
+    default_param_out = os.path.realpath("models")
     default_lg_out = os.path.realpath("output")
     grammar_file = "listSymbolsPart4-revised.txt"
+    model = "rf"
 
     print("Running", sys.argv[0])
     if "-v" in sys.argv:
@@ -226,6 +236,24 @@ def main():
             sys.argv.remove(sys.argv[index+1])
         print("-v : using verbose output level", verbose)
         sys.argv.remove("-v")
+    if "-o" in sys.argv:
+        index = sys.argv.index("-o")
+        if index < len(sys.argv) - 1 and "-" not in sys.argv[index+1]:
+            default_lg_out = os.path.realpath(sys.argv[index+1])
+            sys.argv.remove(sys.argv[index+1])
+        print("-o : using output directory", default_lg_out)
+        sys.argv.remove("-o")
+    else:
+        print("-o not set: output will be sent to", default_lg_out)
+    if "-m" in sys.argv:
+        index = sys.argv.index("-m")
+        if index < len(sys.argv) - 1 and "-" not in sys.argv[index+1]:
+            model = sys.argv[index+1]
+            sys.argv.remove(model)
+            print("-m : using model", model)
+        sys.argv.remove("-m")
+    else:
+        print("-o not set: output will be sent to", default_lg_out)
     if "-g" in sys.argv:  # setting grammar file location
         index = sys.argv.index("-g")
         if index < len(sys.argv) - 1 and "-" not in sys.argv[index+1]:
@@ -251,7 +279,7 @@ def main():
                 sys.argv.remove(default_param_out)
             sys.argv.remove("-p")
             print("-p set,", end=" ")
-        print("-t not set : testing the classifier from parameters saved in", default_param_out)
+        print("-t not set : testing the classifier from parameters saved in directory", default_param_out)
 
     # STEP 1 - PARSING
     print("\n############ Parsing input data ############")
@@ -284,7 +312,7 @@ def main():
         # STEP 2 - SPLITTING
         print("\n########### Splitting input data ###########")
         s = Split(p.parsed_inkml, p.grammar, verbose)
-        s.optimize_cosine()
+        s.optimize_kl()
         # STEP 3 - FEATURE EXTRACTION
         print("\n######## Running feature extraction ########")
         f = FeatureExtraction(verbose)
@@ -298,14 +326,15 @@ def main():
         xgrid_test, ytclass_test, inkmat_test = f.get_feature_set(s.test, verbose)
         # STEP 4 - CLASSIFICATION AND WRITING LG FILES FOR TRAINING SET
         print("\n########## Training the classifier #########")
-        c = Classifier(train_data=xgrid_train, train_targ=ytclass_train, inkml=inkmat_train,
-                       grammar=p.grammar_inv, verbose=verbose, outdir=default_lg_out)
+        c = Classifier(param_dir=default_param_out, train_data=xgrid_train, train_targ=ytclass_train,
+                       inkml=inkmat_train, grammar=p.grammar_inv, verbose=verbose, outdir=default_lg_out)
     # TESTING PATH OF EXECUTION
     else:
         print("\n######## Running feature extraction ########")
         f = FeatureExtraction(verbose)
         xgrid_test, ytclass_test, inkmat_test = f.get_feature_set(p.parsed_inkml, verbose)
-        c = Classifier(param_file=default_param_out)
+        c = Classifier(param_dir=default_param_out, testing=testing, grammar=p.grammar_inv, verbose=verbose,
+                       outdir=default_lg_out, model=model)
 
     # STEP 4 - CLASSIFICATION AND WRITING LG FILES FOR TESTING SET
     print("\n########## Running classification ##########")

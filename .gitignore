@@ -12,6 +12,7 @@ __pycache__/
 # too large, 2 GB of data
 images/
 output/
+models/
 
 # Folder config file
 Desktop.ini

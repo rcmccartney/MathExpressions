@@ -216,5 +216,6 @@ class FeatureExtraction():
                 inkml_file_ref.append((inkml_file, symbol))
         ## OFFLINE FEATURES
         all_data = np.append(np.asarray(x_grid), self.image_pca(images), 1)
-
+        if self.verbose == 1:
+            print("Extracted " + str(all_data.shape[1]) + " features on " + str(all_data.shape[0]) + " instances in dataset")
         return all_data, y_true_class, inkml_file_ref
