@@ -46,7 +46,7 @@ class Symbol():
         plt.pause(3)
         plt.close()
         #rescaled coordinates
-        f = FeatureExtraction(None, None, None)
+        f = FeatureExtraction(False)
         x_trans, y_trans = f.rescale_points(x, y, 1)
         x_interp, y_interp = f.resample_points(x_trans, y_trans, 5)
         plt.figure()
