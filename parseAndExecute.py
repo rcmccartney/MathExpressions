@@ -34,7 +34,10 @@ class Symbol():
 
     def __init__(self, num_in_inkml, label, labelXML, label_index, trace_list):
         self.label = label
-        self.labelXML = labelXML
+        if labelXML[0:2] != ",_":
+            self.labelXML = labelXML
+        else:
+            self.labelXML = "COMMA" + labelXML[1:]
         self.label_index = label_index
         self.trace_list = trace_list
         self.num_in_inkml = num_in_inkml
@@ -72,9 +75,8 @@ class InkmlFile():
     @staticmethod
     def get_fname(fname):
         """ Returns the name only of a file without path or file extension """
-        head, tail = ntpath.split(fname)
-        nopath_name = tail or ntpath.basename(head)
-        return nopath_name.strip(".inkml")
+        base = os.path.basename(fname)
+        return os.path.splitext(base)[0]
 
     def print_it(self, directory, grammar_inv):
         if not os.path.exists(directory):
@@ -113,7 +115,10 @@ class Parser():
                 for line in f:
                     sym = line.strip()
                     self.grammar[sym] = i
-                    self.grammar_inv[i] = sym
+                    if sym != ",":
+                        self.grammar_inv[i] = sym
+                    else:
+                        self.grammar_inv[i] = "COMMA"
                     i += 1
         except IOError:
             print("Error: no grammar or symbol list found. Please ensure you have listSymbolsPart4-revised.txt"
@@ -193,7 +198,7 @@ class Parser():
 
 def print_usage():
     """ Prints correct usage of the program and exits """
-    print("$ python3 parseInkml [flag] [arguments]")
+    print("$ python3 parseAndExecute.py [flag] [arguments]")
     print("flags:")
     print("  -t <model_dir>      : train classifier (no flag set will perform testing)")
     print("  -m [name]           : specify model to use for testing (inside params dir)")
@@ -210,6 +215,7 @@ def print_usage():
     print("  -g [file]           : specify grammar file location")
     print("  -skip               : flag to skip the parsing step and load from parsed.pkl")
     sys.exit(1)
+
 
 #@profile
 def main():
