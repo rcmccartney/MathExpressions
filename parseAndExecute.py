@@ -1,12 +1,11 @@
 import xml.etree.ElementTree as ET
 import os
 import sys
-import ntpath
 import subprocess
 from split import *
 from features import *
 from classifier import *
-#from profilehooks17.profilehooks import *
+from profilehooks17.profilehooks import *
 
 
 class Trace():
@@ -135,6 +134,8 @@ class Parser():
         inkmlfilelist = []
 
         for filename in filelist:
+            if self.verbose == 1:
+                print("parsing", filename)
             num_in_inkml = 0
             with open(filename, 'r') as filexml:
                 tree = ET.parse(filexml)
@@ -217,7 +218,18 @@ def print_usage():
     sys.exit(1)
 
 
-#@profile
+def pickle_array(mat, name):
+    with open(os.path.relpath(name), 'wb') as handle:
+        pickle.dump(mat, handle, pickle.HIGHEST_PROTOCOL)
+
+
+def unpickle(name):
+    with open(os.path.relpath(name), 'rb') as handle:
+        tmp = pickle.load(handle)
+    return tmp
+
+
+@profile
 def main():
     """
     This is the pipeline of the system
@@ -318,30 +330,45 @@ def main():
         print("Parsed", len(p.parsed_inkml), "InkML files")
         if verbose == 2:
             p.print_results()
-        with open(os.path.relpath("parsed.pkl"), 'wb') as handle:
-            pickle.dump(p, handle, pickle.HIGHEST_PROTOCOL)
+        pickle_array(p, "parsed.pkl")
     # LOAD SAVED PARSED FILE
     else:
-        with open(os.path.relpath("parsed.pkl"), 'rb') as handle:
-            p = pickle.load(handle)
+        print("opening parsed XML from file parsed.pkl")
+        p = unpickle("parsed.pkl")
 
     # TRAINING PATH OF EXECTION
     if not testing:
-        # STEP 2 - SPLITTING
-        print("\n########### Splitting input data ###########")
-        s = Split(p.parsed_inkml, p.grammar, verbose)
-        s.optimize_kl()
-        # STEP 3 - FEATURE EXTRACTION
-        print("\n######## Running feature extraction ########")
-        f = FeatureExtraction(verbose)
-        if verbose == 2:
-            for inkmlFile in s.train:
-                for symbol in inkmlFile.symbol_list:
-                    print(inkmlFile.fname, symbol.label)
-                    f.convert_and_plot(symbol.trace_list)
+        # Skip feature extraction to save time
+        if skip:
+            print("opening features from x_train.pkl, x_test.pkl")
+            xgrid_train = unpickle("x_train.pkl")
+            ytclass_train = unpickle("y_train.pkl")
+            inkmat_train = unpickle("inkmat_train.pkl")
+            xgrid_test = unpickle("x_test.pkl")
+            ytclass_test = unpickle("y_test.pkl")
+            inkmat_test = unpickle("inkmat_test.pkl")
+        else:
+            # STEP 2 - SPLITTING
+            print("\n########### Splitting input data ###########")
+            s = Split(p.parsed_inkml, p.grammar, verbose)
+            s.optimize_kl()
+            # STEP 3 - FEATURE EXTRACTION
+            print("\n######## Running feature extraction ########")
+            f = FeatureExtraction(verbose)
+            if verbose == 2:
+                for inkmlFile in s.train:
+                    for symbol in inkmlFile.symbol_list:
+                        print(inkmlFile.fname, symbol.label)
+                        f.convert_and_plot(symbol.trace_list)
+            xgrid_train, ytclass_train, inkmat_train = f.get_feature_set(s.train, verbose)
+            pickle_array(xgrid_train, "x_train.pkl")
+            pickle_array(ytclass_train, "y_train.pkl")
+            pickle_array(inkmat_train, "inkmat_train.pkl")
+            xgrid_test, ytclass_test, inkmat_test = f.get_feature_set(s.test, verbose)
+            pickle_array(xgrid_test, "x_test.pkl")
+            pickle_array(ytclass_test, "y_test.pkl")
+            pickle_array(inkmat_test, "inkmat_test.pkl")
 
-        xgrid_train, ytclass_train, inkmat_train = f.get_feature_set(s.train, verbose)
-        xgrid_test, ytclass_test, inkmat_test = f.get_feature_set(s.test, verbose)
         # STEP 4 - CLASSIFICATION AND WRITING LG FILES FOR TRAINING SET
         print("\n########## Training the classifier #########")
         c = Classifier(param_dir=default_param_out, train_data=xgrid_train, train_targ=ytclass_train,
@@ -357,7 +384,6 @@ def main():
     # STEP 4 - CLASSIFICATION AND WRITING LG FILES FOR TESTING SET
     print("\n########## Running classification ##########")
     c.test_classifiers(xgrid_test, test_targ=ytclass_test, inkml=inkmat_test)
-
 
 
 if __name__ == '__main__':

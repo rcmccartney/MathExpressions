@@ -77,8 +77,8 @@ class FeatureExtraction():
     @staticmethod
     def convert_to_image(trace_list, pixel_axis=20):
         x, y = FeatureExtraction.rescale_and_resample(trace_list, bound_square_len=pixel_axis)
-        x_res_np = np.around(np.array(x))
-        y_res_np = np.around(np.array(y))
+        x_res_np = np.around(np.asarray(x))
+        y_res_np = np.around(np.asarray(y))
         image_mat = np.zeros([pixel_axis+1, pixel_axis+1])
         image_mat[y_res_np.astype(int), x_res_np.astype(int)] = 1
         return image_mat
@@ -108,41 +108,40 @@ class FeatureExtraction():
             ratio = w/h
         else:
             ratio = 1
-        return [ratio]
+        return ratio
 
     @staticmethod
     def get_mean(vec):
-        return [sum(vec)/len(vec)]
+        return sum(vec)/len(vec)
 
     @staticmethod
     def get_cov_xy(xtrans, ytrans):
         if (len(xtrans) > 1):
             # this will fail otherwise for single points that don't have a covariance
-            x = np.cov(xtrans, ytrans).flatten().tolist()
+            x = np.cov(xtrans, ytrans).flatten()
         else:
-            x = [0, 0, 0, 0]
+            x = np.zeros(4)
         return x
 
     @staticmethod
     def get_number_strokes(symbol):
-        return [len(symbol.trace_list)]
+        return len(symbol.trace_list)
         
     @staticmethod
     def get_fuzzy_histogram_distance(xlist, ylist, bound=20):
         numgrid = 4
         w = float(bound)/float(numgrid)
         h = float(bound)/float(numgrid)
-        
-        grid = np.zeros([numgrid+1,numgrid+1])
-        for index in range(0,len(xlist)):
+
+        grid = np.zeros([numgrid+1, numgrid+1])
+        for index in range(0, len(xlist)):
             lowerx = int(math.floor(xlist[index]/w))
             lowery = int(math.floor(ylist[index]/h))
             gridx = [lowerx, lowerx+1, lowerx, lowerx+1]
             gridy = [lowery, lowery, lowery+1, lowery+1]
             for j in range(0,len(gridx)):
                 grid[gridx[j]][gridy[j]] += (w - abs(gridx[j]*w - xlist[index]))/w * (h - abs(gridy[j]*h - ylist[index]))/h
-        gridvector = grid.flatten().tolist()
-        return gridvector
+        return grid.flatten()
     
     @staticmethod
     def get_all_crosses_maxmin(image_mat, numregions=5, verbose=False):
@@ -150,7 +149,6 @@ class FeatureExtraction():
             numrows, numcols = image_mat.shape
             if numregions > numrows or numregions > numcols:
                 numregions = 1
-            
             rowwidth = int(math.floor(numrows/numregions))
             avelist = []
             mincrosslist = []
@@ -158,12 +156,10 @@ class FeatureExtraction():
             for i in range(0,numrows,rowwidth):
                 subrows = image_mat[i:i+rowwidth,:]
                 ave = subrows.sum()/float(rowwidth)
-                
                 minindexsum = 0
                 maxindexsum = 0
                 for row in subrows:
-                    nonzero_indices = np.where(row != 0)[1]
-                    nonzero_indices = nonzero_indices.tolist()[0]
+                    nonzero_indices = np.where(row != 0)[0]
                     if len(nonzero_indices) == 0:
                         minInd = 0
                         maxInd = len(subrows)-1
@@ -183,39 +179,50 @@ class FeatureExtraction():
         rowwise = get_rowwise_crosses_maxmin(image_mat,numregions,verbose)
         colwise = get_rowwise_crosses_maxmin(image_mat.transpose(),numregions,verbose)
         totalfeatures = rowwise + colwise
-        return totalfeatures
+        return np.asarray(totalfeatures)
 
     @staticmethod
     def image_pca(images, components=10):
         return PCA(n_components=components).fit_transform(images)
 
     def get_feature_set(self, inkml_file_list, verbose):
-        x_grid = []
+        symbol_size = 0  # get the size to pre-alocate the array
+        for inkml in inkml_file_list:
+            symbol_size += len(inkml.symbol_list)
+        x_grid = np.zeros((symbol_size, 69))  # 69 is number of features we have
         y_true_class = []
         inkml_file_ref = []
         pixel_axis = 20
         size = (pixel_axis+1)*(pixel_axis+1)
-        images = np.empty((0, size), int)
+        images = np.zeros((symbol_size, size))
+        curr = 0
         for inkml_file in inkml_file_list:
+            if verbose == 1:
+                print("Creating features for", inkml_file.fname)
             for symbol in inkml_file.symbol_list:
                 xtrans, ytrans = self.rescale_and_resample(symbol.trace_list)
-                image = self.convert_to_image(symbol.trace_list, pixel_axis=pixel_axis)
-                images = np.append(images, image.flatten().reshape([1, size]), axis=0)
+                ximage, yimage = self.rescale_and_resample(symbol.trace_list, pixel_axis)
+                #image = self.convert_to_image(symbol.trace_list, pixel_axis=pixel_axis)
+                #images = np.append(images, image.flatten().reshape([1, size]), axis=0)
+                indices = [np.around(y)*(pixel_axis+1) + np.around(x) for x, y in zip(ximage, yimage)]
+                images[curr, indices] = 1
                 ## ONLINE FEATURES ##
-                x = []
-                x.extend(self.get_number_strokes(symbol))
-                x.extend(self.get_cov_xy(xtrans, ytrans))
-                x.extend(self.get_mean(xtrans))
-                x.extend(self.get_mean(ytrans))
-                x.extend(self.get_aspect_ratio(symbol))
-                x.extend(self.get_fuzzy_histogram_distance(xtrans, ytrans))
-                x.extend(self.get_all_crosses_maxmin(np.asmatrix(image), 5))
+                x_grid[curr, 0] = self.get_number_strokes(symbol)
+                x_grid[curr, 1:5] = self.get_cov_xy(xtrans, ytrans)
+                x_grid[curr, 5] = self.get_mean(xtrans)
+                x_grid[curr, 6] = self.get_mean(ytrans)
+                x_grid[curr, 7] = self.get_aspect_ratio(symbol)
+                x_grid[curr, 8:33] = self.get_fuzzy_histogram_distance(xtrans, ytrans)
+                x_grid[curr, 33:69] = self.get_all_crosses_maxmin(np.reshape(images[curr],
+                                                                            (pixel_axis+1, pixel_axis+1)), 5)
                 #x.extend(image.flatten())
-                x_grid.append(x)
                 y_true_class.append(symbol.label_index)
                 inkml_file_ref.append((inkml_file, symbol))
+                curr += 1
         ## OFFLINE FEATURES
-        all_data = np.append(np.asarray(x_grid), self.image_pca(images), 1)
+        ## append columns
+
+        all_data = np.append(x_grid, self.image_pca(images), 1)
         if self.verbose == 1:
             print("Extracted " + str(all_data.shape[1]) + " features on " + str(all_data.shape[0]) + " instances in dataset")
         return all_data, y_true_class, inkml_file_ref

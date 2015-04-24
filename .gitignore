@@ -13,6 +13,7 @@ __pycache__/
 images/
 output/
 models/
+models_2/
 
 # Folder config file
 Desktop.ini

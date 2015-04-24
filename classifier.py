@@ -24,7 +24,6 @@ class Classifier():
         self.classifiers = []
         self.outdir = outdir
         self.param_dir = param_dir
-
         if testing:
             self.load_saved_classifier(param_dir, model)
         else:
@@ -75,7 +74,6 @@ class Classifier():
         self.classifiers.append((name, shorthand, model))
         if self.verbose == 1:
             self.print_confusion(self.train_target, out)
-
 
     def test_classifiers(self, test_data, test_targ=None, inkml=None):
         """
