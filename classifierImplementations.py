@@ -46,14 +46,14 @@ class KnnClassifier():
             results.append(out)
         return results
 
-    def predict_proba(test, label): #return the associated score
+    def predict_proba(self, test_data, label): #return the associated score
         out_probs = []
-        for i in range(len(test)):
+        for i in range(len(test_data)):
             ave_dist = 0
             count = 0
-            for j in self.y:
+            for j in range(len(self.y)):
                 if self.y[j] == label:
-                    ave_dist += np.linalg.norm(self.x[j],test_data[i])
+                    ave_dist += np.linalg.norm(self.x[j] - test_data[i])
                     count += 1
             ave_dist /= count
             out_probs.append(ave_dist)

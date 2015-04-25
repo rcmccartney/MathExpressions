@@ -222,7 +222,10 @@ class FeatureExtraction():
         ## OFFLINE FEATURES
         ## append columns
 
-        all_data = np.append(x_grid, self.image_pca(images), 1)
+        
+        '''removed pca for now'''
+        #all_data = np.append(x_grid, self.image_pca(images), 1)
+        all_data = x_grid
         if self.verbose == 1:
             print("Extracted " + str(all_data.shape[1]) + " features on " + str(all_data.shape[0]) + " instances in dataset")
         return all_data, y_true_class, inkml_file_ref
@@ -241,7 +244,6 @@ class FeatureExtraction():
         #images = np.append(images, image.flatten().reshape([1, size]), axis=0)
         indices = [np.around(y)*(pixel_axis+1) + np.around(x) for x, y in zip(ximage, yimage)]
         images[curr, indices] = 1
-        print(images)
         ## ONLINE FEATURES ##
         x_grid[curr, 0] = self.get_number_strokes(symbol)
         x_grid[curr, 1:5] = self.get_cov_xy(xtrans, ytrans)
@@ -256,9 +258,8 @@ class FeatureExtraction():
         ## OFFLINE FEATURES
         ## append columns
 
-        all_data = np.append(x_grid, self.image_pca(images), 1)
-        print(all_data.shape)
-        print((self.image_pca(images)).shape)
+        #all_data = np.append(x_grid, self.image_pca(images), 1)
+        all_data = x_grid
         if self.verbose == 1:
             print("Extracted " + str(all_data.shape[1]) + " features on " + str(all_data.shape[0]) + " instances in dataset")
         return all_data

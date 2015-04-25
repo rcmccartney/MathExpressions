@@ -399,6 +399,8 @@ def main():
             temp_symbol = Symbol(None,None,None,None,[trace_list[0]])
             feature_set = f.get_single_feature_set(temp_symbol,0)
             minkey, mindist = c.eval(feature_set,0)
+            print("minkey", minkey)
+            print("mindist", mindist)
             best.append(mindist) #index 0
             backtrack.append(-1) #indicates start of array
             bestclass.append(minkey)

@@ -83,11 +83,11 @@ class Classifier():
         max_prob = -1
         max_class = ""
         model_class_list = model_temp.classes_
-        for i in outprob:
+        for i in range(len(outprob)):
             if outprob[i] > max_prob:
                 max_prob = outprob[i]
                 max_class = model_class_list[i]
-        return math.log(max_prob), max_class
+        return max_class, math.log(max_prob)
         
     def test_classifiers(self, test_data, test_targ=None, inkml=None):
         """
