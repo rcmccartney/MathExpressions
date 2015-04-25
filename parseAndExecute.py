@@ -372,11 +372,11 @@ def main():
                     for symbol in inkmlFile.symbol_list:
                         print(inkmlFile.fname, symbol.label)
                         f.convert_and_plot(symbol.trace_list)
-            xgrid_train, ytclass_train, inkmat_train = f.get_feature_set(s.train, verbose)
+            xgrid_train, ytclass_train, inkmat_train = f.get_feature_set(s.train, True, verbose)
             pickle_array(xgrid_train, "x_train.pkl")
             pickle_array(ytclass_train, "y_train.pkl")
             pickle_array(inkmat_train, "inkmat_train.pkl")
-            xgrid_test, ytclass_test, inkmat_test = f.get_feature_set(s.test, verbose)
+            xgrid_test, ytclass_test, inkmat_test = f.get_feature_set(s.test, False, verbose)
             pickle_array(xgrid_test, "x_test.pkl")
             pickle_array(ytclass_test, "y_test.pkl")
             pickle_array(inkmat_test, "inkmat_test.pkl")
@@ -387,7 +387,7 @@ def main():
                        inkml=inkmat_train, grammar=p.grammar_inv, verbose=verbose, outdir=default_lg_out)
                        
                        
-        f = FeatureExtraction(verbose)
+        #f = FeatureExtraction(verbose)
         for inkmlfile in s.test:
             trace_list = inkmlfile.get_trace_list()
             best = []
@@ -398,7 +398,7 @@ def main():
             
             temp_symbol = Symbol(None,None,None,None,[trace_list[0]])
             feature_set = f.get_single_feature_set(temp_symbol,0)
-            maxkey, maxdist = c.eval(feature_set,1,1)
+            maxkey, maxdist = c.eval(feature_set,1,0)
             print("maxkey", maxkey)
             print("maxdist", maxdist)
             best.append(maxdist) #index 0
@@ -415,7 +415,7 @@ def main():
                     print("subset: ", j+1, ", ", i+1)
                     temp_symbol = Symbol(None,None,None,None,subset)
                     feature_set = f.get_single_feature_set(temp_symbol,0)
-                    maxkey, maxdist = c.eval(feature_set,len(subset),1)
+                    maxkey, maxdist = c.eval(feature_set,len(subset),0)
                     
                     print("maxkey: ", maxkey, "maxdist: ", maxdist)
                     dist = best[j] + maxdist
@@ -429,7 +429,7 @@ def main():
                 #special case: all traces up to and including i are one character
                 temp_symbol = Symbol(None,None,None,None,trace_list[0:i+1])
                 feature_set = f.get_single_feature_set(temp_symbol,0)
-                maxkey, maxdist = c.eval(feature_set,(i+1),1)
+                maxkey, maxdist = c.eval(feature_set,(i+1),0)
                 if maxdist > best[i]:
                     best[i] = maxdist
                     backtrack[i] = -1
@@ -444,7 +444,7 @@ def main():
     else:
         print("\n######## Running feature extraction ########")
         f = FeatureExtraction(verbose)
-        xgrid_test, ytclass_test, inkmat_test = f.get_feature_set(p.parsed_inkml, verbose)
+        xgrid_test, ytclass_test, inkmat_test = f.get_feature_set(p.parsed_inkml, True, verbose)
         c = Classifier(param_dir=default_param_out, testing=testing, grammar=p.grammar_inv, verbose=verbose, outdir=default_lg_out, model=model)
             
     # STEP 4 - CLASSIFICATION AND WRITING LG FILES FOR TESTING SET

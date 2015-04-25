@@ -17,6 +17,7 @@ class FeatureExtraction():
 
     def __init__(self, verbose):
         self.verbose = verbose
+        self.trainedPCAmodel = None
 
     @staticmethod
     def rescale_and_resample(trace_list, bound_square_len=1, alpha=0.01):
@@ -181,11 +182,15 @@ class FeatureExtraction():
         totalfeatures = rowwise + colwise
         return np.asarray(totalfeatures)
 
-    @staticmethod
-    def image_pca(images, components=10):
-        return PCA(n_components=components).fit_transform(images)
+    def image_pca(self, images, trainPCA = True, components=10): #trainPCA means generate new components from input set
+        print("val: ", trainPCA)
+        if( trainPCA ):
+            self.trainedPCAmodel = PCA(n_components=components)
+            return self.trainedPCAmodel.fit_transform(images)
+        else:
+            return self.trainedPCAmodel.transform(images)
 
-    def get_feature_set(self, inkml_file_list, verbose):
+    def get_feature_set(self, inkml_file_list, trainPCA = True, verbose = 0):
         symbol_size = 0  # get the size to pre-alocate the array
         for inkml in inkml_file_list:
             symbol_size += len(inkml.symbol_list)
@@ -224,7 +229,7 @@ class FeatureExtraction():
 
         
         '''removed pca for now'''
-        #all_data = np.append(x_grid, self.image_pca(images), 1)
+        all_data = np.append(x_grid, self.image_pca(images, trainPCA), 1)
         all_data = x_grid
         if self.verbose == 1:
             print("Extracted " + str(all_data.shape[1]) + " features on " + str(all_data.shape[0]) + " instances in dataset")
@@ -258,7 +263,7 @@ class FeatureExtraction():
         ## OFFLINE FEATURES
         ## append columns
 
-        #all_data = np.append(x_grid, self.image_pca(images), 1)
+        all_data = np.append(x_grid, self.image_pca(images, False), 1)
         all_data = x_grid
         if self.verbose == 1:
             print("Extracted " + str(all_data.shape[1]) + " features on " + str(all_data.shape[0]) + " instances in dataset")
