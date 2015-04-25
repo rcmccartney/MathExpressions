@@ -398,44 +398,48 @@ def main():
             
             temp_symbol = Symbol(None,None,None,None,[trace_list[0]])
             feature_set = f.get_single_feature_set(temp_symbol,0)
-            minkey, mindist = c.eval(feature_set,0)
-            print("minkey", minkey)
-            print("mindist", mindist)
-            best.append(mindist) #index 0
+            maxkey, maxdist = c.eval(feature_set,1,1)
+            print("maxkey", maxkey)
+            print("maxdist", maxdist)
+            best.append(maxdist) #index 0
             backtrack.append(-1) #indicates start of array
-            bestclass.append(minkey)
+            bestclass.append(maxkey)
             for i in range(1, len(trace_list)):
-                #print("-----")
-                best.append(float("inf"))
+                print("-----")
+                best.append(float("-inf"))
                 backtrack.append(-1)
                 bestclass.append("temp")
                 for j in range(i-1, -1,-1):
                     #print(i, ", ", j, ", ", best[j])
                     subset = trace_list[j+1:i+1]
-                    
+                    print("subset: ", j+1, ", ", i+1)
                     temp_symbol = Symbol(None,None,None,None,subset)
                     feature_set = f.get_single_feature_set(temp_symbol,0)
-                    minkey, mindist = c.eval(feature_set,0)
+                    maxkey, maxdist = c.eval(feature_set,len(subset),1)
                     
-                    dist = best[j] + mindist
+                    print("maxkey: ", maxkey, "maxdist: ", maxdist)
+                    dist = best[j] + maxdist
                     #print(dist)
                     #print(best[i])
-                    if dist < best[i]:
+                    if dist > best[i]:
                         #print("got here")
                         best[i] = dist
                         backtrack[i] = j
-                        bestclass[i] = minkey
+                        bestclass[i] = maxkey
                 #special case: all traces up to and including i are one character
-                temp_symbol = Symbol(None,None,None,None,trace_list)
+                temp_symbol = Symbol(None,None,None,None,trace_list[0:i+1])
                 feature_set = f.get_single_feature_set(temp_symbol,0)
-                minkey, mindist = c.eval(feature_set,0)
-                if mindist < best[i]:
-                    best[i] = mindist
+                maxkey, maxdist = c.eval(feature_set,(i+1),1)
+                if maxdist > best[i]:
+                    best[i] = maxdist
                     backtrack[i] = -1
-                    bestclass[i] = minkey
+                    bestclass[i] = maxkey
             print(best)
             print(backtrack)
             print(bestclass)
+            print("")
+            print("")
+            print("")
     # TESTING PATH OF EXECUTION
     else:
         print("\n######## Running feature extraction ########")
@@ -444,8 +448,10 @@ def main():
         c = Classifier(param_dir=default_param_out, testing=testing, grammar=p.grammar_inv, verbose=verbose, outdir=default_lg_out, model=model)
             
     # STEP 4 - CLASSIFICATION AND WRITING LG FILES FOR TESTING SET
-    print("\n########## Running classification ##########")
-    c.test_classifiers(xgrid_test, test_targ=ytclass_test, inkml=inkmat_test)
+    
+    #have to parse segmentation output into inkml file set, then run classifiers
+    '''print("\n########## Running classification ##########")
+    c.test_classifiers(xgrid_test, test_targ=ytclass_test, inkml=inkmat_test)'''
 
 
 if __name__ == '__main__':
