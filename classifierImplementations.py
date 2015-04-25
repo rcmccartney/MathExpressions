@@ -11,7 +11,6 @@ from pylab import plot, hold, show
 import numpy as np
 import scipy.stats
 
-
 class KnnClassifier():
 
     def __init__(self, k=1):
@@ -56,7 +55,8 @@ class KnnClassifier():
                     ave_dist += np.linalg.norm(self.x[j] - test_data[i])
                     count += 1
             ave_dist /= count
-            out_probs.append(ave_dist)
+            pseudo_prob = 1/ave_dist
+            out_probs.append(pseudo_prob)
         return out_probs
 
 class FFNeural():
