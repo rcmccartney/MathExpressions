@@ -20,11 +20,13 @@ class KnnClassifier():
         self.k = k
         self.x = None
         self.y = None
-
+        self.classes_ = None
+        
     def fit(self, data, target):
         self.x = np.asarray(data)
         self.y = np.asarray(target)
-
+        self.classes_ = np.asarray(target)
+        
     def predict(self, test):
         """
         Performs K nearest neighbor classification for any choice of K set in constructor
@@ -44,6 +46,18 @@ class KnnClassifier():
             results.append(out)
         return results
 
+    def predict_proba(test, label): #return the associated score
+        out_probs = []
+        for i in range(len(test)):
+            ave_dist = 0
+            count = 0
+            for j in self.y:
+                if self.y[j] == label:
+                    ave_dist += np.linalg.norm(self.x[j],test_data[i])
+                    count += 1
+            ave_dist /= count
+            out_probs.append(ave_dist)
+        return out_probs
 
 class FFNeural():
     """ Uses pybrain for two neural network implementations """

@@ -1,5 +1,6 @@
 __author__ = 'mccar_000'
 
+import math
 import os
 import pickle
 from sklearn.ensemble import AdaBoostClassifier
@@ -75,6 +76,19 @@ class Classifier():
         if self.verbose == 1:
             self.print_confusion(self.train_target, out)
 
+    def eval(self, feature_set, model_index):
+        model_temp = self.classifiers[model_index][2]
+        out = model_temp.predict(feature_set)
+        outprob = model_temp.predict_proba(feature_set, out)
+        max_prob = -1
+        max_class = ""
+        model_class_list = model_temp.classes_
+        for i in outprob:
+            if outprob[i] > max_prob:
+                max_prob = outprob[i]
+                max_class = model_class_list[i]
+        return math.log(max_prob), max_class
+        
     def test_classifiers(self, test_data, test_targ=None, inkml=None):
         """
         Tests the classifiers trained above on the testing target data.

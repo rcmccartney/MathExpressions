@@ -33,10 +33,13 @@ class Symbol():
 
     def __init__(self, num_in_inkml, label, labelXML, label_index, trace_list):
         self.label = label
-        if labelXML[0:2] != ",_":
-            self.labelXML = labelXML
+        if labelXML != None:
+            if labelXML[0:2] != ",_":
+                self.labelXML = labelXML
+            else:
+                self.labelXML = "COMMA" + labelXML[1:]
         else:
-            self.labelXML = "COMMA" + labelXML[1:]
+            self.labelXML = labelXML
         self.label_index = label_index
         self.trace_list = trace_list
         self.num_in_inkml = num_in_inkml
@@ -71,6 +74,15 @@ class InkmlFile():
         except Exception as e:
             print("Issue with processing", fname, "into .lg:", e)
 
+    def get_trace_list(self):
+        all_trace_list = []
+        for symbol in self.symbol_list:
+            for trace in symbol.trace_list:
+                all_trace_list.append(trace)
+        #sort to obtain inkml ordering
+        all_trace_list.sort(key=lambda x: int(x.id), reverse=True)
+        return all_trace_list
+            
     @staticmethod
     def get_fname(fname):
         """ Returns the name only of a file without path or file extension """
@@ -243,7 +255,7 @@ def main():
     default_param_out = os.path.realpath("models")
     default_lg_out = os.path.realpath("output")
     grammar_file = "listSymbolsPart4-revised.txt"
-    model = "rf"
+    model = "rf.pkl"
     skip = False
 
     print("Running", sys.argv[0])
@@ -373,14 +385,62 @@ def main():
         print("\n########## Training the classifier #########")
         c = Classifier(param_dir=default_param_out, train_data=xgrid_train, train_targ=ytclass_train,
                        inkml=inkmat_train, grammar=p.grammar_inv, verbose=verbose, outdir=default_lg_out)
+                       
+                       
+        f = FeatureExtraction(verbose)
+        for inkmlfile in s.test:
+            trace_list = inkmlfile.get_trace_list()
+            best = []
+            backtrack = []
+            bestclass = []
+            
+            #input to eval is a list of traces - need to get feature set for this
+            
+            temp_symbol = Symbol(None,None,None,None,[trace_list[0]])
+            feature_set = f.get_single_feature_set(temp_symbol,0)
+            minkey, mindist = c.eval(feature_set,0)
+            best.append(mindist) #index 0
+            backtrack.append(-1) #indicates start of array
+            bestclass.append(minkey)
+            for i in range(1, len(trace_list)):
+                #print("-----")
+                best.append(float("inf"))
+                backtrack.append(-1)
+                bestclass.append("temp")
+                for j in range(i-1, -1,-1):
+                    #print(i, ", ", j, ", ", best[j])
+                    subset = trace_list[j+1:i+1]
+                    
+                    temp_symbol = Symbol(None,None,None,None,subset)
+                    feature_set = f.get_single_feature_set(temp_symbol,0)
+                    minkey, mindist = c.eval(feature_set,0)
+                    
+                    dist = best[j] + mindist
+                    #print(dist)
+                    #print(best[i])
+                    if dist < best[i]:
+                        #print("got here")
+                        best[i] = dist
+                        backtrack[i] = j
+                        bestclass[i] = minkey
+                #special case: all traces up to and including i are one character
+                temp_symbol = Symbol(None,None,None,None,trace_list)
+                feature_set = f.get_single_feature_set(temp_symbol,0)
+                minkey, mindist = c.eval(feature_set,0)
+                if mindist < best[i]:
+                    best[i] = mindist
+                    backtrack[i] = -1
+                    bestclass[i] = minkey
+            print(best)
+            print(backtrack)
+            print(bestclass)
     # TESTING PATH OF EXECUTION
     else:
         print("\n######## Running feature extraction ########")
         f = FeatureExtraction(verbose)
         xgrid_test, ytclass_test, inkmat_test = f.get_feature_set(p.parsed_inkml, verbose)
-        c = Classifier(param_dir=default_param_out, testing=testing, grammar=p.grammar_inv, verbose=verbose,
-                       outdir=default_lg_out, model=model)
-
+        c = Classifier(param_dir=default_param_out, testing=testing, grammar=p.grammar_inv, verbose=verbose, outdir=default_lg_out, model=model)
+            
     # STEP 4 - CLASSIFICATION AND WRITING LG FILES FOR TESTING SET
     print("\n########## Running classification ##########")
     c.test_classifiers(xgrid_test, test_targ=ytclass_test, inkml=inkmat_test)

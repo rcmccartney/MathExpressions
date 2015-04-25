@@ -226,3 +226,39 @@ class FeatureExtraction():
         if self.verbose == 1:
             print("Extracted " + str(all_data.shape[1]) + " features on " + str(all_data.shape[0]) + " instances in dataset")
         return all_data, y_true_class, inkml_file_ref
+        
+    def get_single_feature_set(self, symbol, verbose):
+        symbol_size = 1  # get the size to pre-alocate the array
+        x_grid = np.zeros((symbol_size, 69))  # 69 is number of features we have
+        pixel_axis = 20
+        size = (pixel_axis+1)*(pixel_axis+1)
+        images = np.zeros((symbol_size, size))
+        curr = 0
+
+        xtrans, ytrans = self.rescale_and_resample(symbol.trace_list)
+        ximage, yimage = self.rescale_and_resample(symbol.trace_list, pixel_axis)
+        #image = self.convert_to_image(symbol.trace_list, pixel_axis=pixel_axis)
+        #images = np.append(images, image.flatten().reshape([1, size]), axis=0)
+        indices = [np.around(y)*(pixel_axis+1) + np.around(x) for x, y in zip(ximage, yimage)]
+        images[curr, indices] = 1
+        print(images)
+        ## ONLINE FEATURES ##
+        x_grid[curr, 0] = self.get_number_strokes(symbol)
+        x_grid[curr, 1:5] = self.get_cov_xy(xtrans, ytrans)
+        x_grid[curr, 5] = self.get_mean(xtrans)
+        x_grid[curr, 6] = self.get_mean(ytrans)
+        x_grid[curr, 7] = self.get_aspect_ratio(symbol)
+        x_grid[curr, 8:33] = self.get_fuzzy_histogram_distance(xtrans, ytrans)
+        x_grid[curr, 33:69] = self.get_all_crosses_maxmin(np.reshape(images[curr],
+                                                                    (pixel_axis+1, pixel_axis+1)), 5)
+        #x.extend(image.flatten())
+        curr += 1
+        ## OFFLINE FEATURES
+        ## append columns
+
+        all_data = np.append(x_grid, self.image_pca(images), 1)
+        print(all_data.shape)
+        print((self.image_pca(images)).shape)
+        if self.verbose == 1:
+            print("Extracted " + str(all_data.shape[1]) + " features on " + str(all_data.shape[0]) + " instances in dataset")
+        return all_data
