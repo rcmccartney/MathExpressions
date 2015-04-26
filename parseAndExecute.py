@@ -401,8 +401,8 @@ def main():
     # STEP 4 - CLASSIFICATION AND WRITING LG FILES FOR TESTING SET
     
     #have to parse segmentation output into inkml file set, then run classifiers
-    print("\n########## Running classification ##########")
-    c.test_classifiers(xgrid_test, test_targ=ytclass_test, inkml=inkmat_test)
+    '''print("\n########## Running classification ##########")
+    c.test_classifiers(xgrid_test, test_targ=ytclass_test, inkml=inkmat_test)'''
 
 
 if __name__ == '__main__':
