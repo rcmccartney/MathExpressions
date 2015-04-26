@@ -64,4 +64,8 @@ class Segmenter():
                 best_list.append(best)
                 backtrack_list.append(backtrack)
                 bestclass_list.append(bestclass)
-            return best_list, backtrack_list, bestclass_list
+                #get the trace id's
+                trace_ids = []
+                for trace in trace_list:
+                    trace_ids.append(trace.id)
+            return best_list, backtrack_list, bestclass_list, trace_ids
