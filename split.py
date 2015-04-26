@@ -13,7 +13,7 @@ class Split():
     threshold = 0.001
     iterations = 100
 
-    def __init__(self, inkmllist, grammar, verbose):
+    def __init__(self, inkmllist, grammar, verbose, split_percent):
         self.train = []
         self.test = []
         self.verbose = verbose
@@ -21,7 +21,7 @@ class Split():
         self.grammar = grammar
         # make a purely random split
         for item in inkmllist:
-            if random.random() <= 0.7:
+            if random.random() <= split_percent:
                 self.train.append(item)
             else:
                 self.test.append(item)

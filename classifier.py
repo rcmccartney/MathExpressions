@@ -41,15 +41,6 @@ class Classifier():
         self.train_classifier("Random Forest", "rf", RandomForestClassifier(n_estimators=200))
         self.train_classifier("SVM w/ RBF kernel", "rbf_svm", svm.SVC(kernel='rbf'))
 
-        #print("** Training Neural Network **")
-        #ff = FFNeural(len(self.grammar))
-        #ff.fit(self.train_data, self.train_target, 100)
-        #if verbose == 1:
-        #    self.print_confusion(self.train_target, ff.predict(self.train_data))
-        #print("** Training LSTM **")
-        #lstm = LSTMNeural(len(self.grammar))
-        #lstm.fit(self.train_data, self.train_target, 100)
-
     def make_lg(self, output, inkml, dirname):
         # fill in the inkmls with this output decision
         for i in range(len(output)):
