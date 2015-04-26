@@ -5,13 +5,15 @@ from execute import *
 
 class Segmenter():
 
-        def __init__(self):
+        def __init__(self, outdir=None, grammar=None):
 
             self.best_list = []
             self.backtrack_list = []
             self.bestclass_list = []
-            self.trace_ids = []
+            self.trace_ids_list = []
             self.test_data = None
+            self.outdir = outdir
+            self.grammar = grammar
 
         def segment_inkml_files(self, test_data, feature_extractor, classifier):
 
@@ -78,8 +80,25 @@ class Segmenter():
             self.best_list = best_list
             self.backtrack_list = backtrack_list
             self.bestclass_list = bestclass_list
-            self.trace_ids = trace_ids_list
+            self.trace_ids_list = trace_ids_list
 
-        def backtrack(self):
-            pass
+        def backtrack_and_print(self):
+            assert self.test_data is not None, "Need to segment inkml files before performing backtracking"
+            for i in range(len(self.test_data)):
+                inkml = self.test_data[i]
+                parents = self.backtrack_list[i]
+                classes = self.bestclass_list[i]
+                traces = self.trace_ids_list[i]
+                # symbol_list will be [(class, [traceIDs])]
+                symbol_list = []
+                curr = len(classes) - 1
+                while curr >= 0:
+                    curr_trace = []
+                    prev = parents[curr]
+                    for i in range(curr, prev, -1):
+                        curr_trace = [traces[i]] + curr_trace
+                    symbol_list = [(classes[curr], curr_trace)] + symbol_list
+                    curr = prev
+                # now symbol_list has been built so print it
+                inkml.print_it(self.outdir, self.grammar, symbol_list)
 

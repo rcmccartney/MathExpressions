@@ -124,7 +124,6 @@ def main():
         # TODO : remove the grammar from the parser so it doesn't need to be unparsed lol
         assert os.path.isfile("features.pkl"), "You must have a trained feature extractor before segmentation"
         f = unpickle("features.pkl")
-
         # two cases - if this is training, use the split test data
         # otherwise, use parsed test data
         if not testing:
@@ -140,8 +139,9 @@ def main():
             inkml = p.parsed_inkml
         c = Classifier(param_dir=default_model_out, testing=True, grammar=p.grammar_inv,
                        verbose=verbose, outdir=default_lg_out, model=model)
-        seg = Segmenter()
+        seg = Segmenter(outdir=default_lg_out, grammar=p.grammar_inv)
         seg.segment_inkml_files(inkml, f, c)
+        seg.backtrack_and_print()
 
 
 if __name__ == '__main__':

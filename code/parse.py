@@ -76,7 +76,7 @@ class InkmlFile():
         base = os.path.basename(fname)
         return os.path.splitext(base)[0]
 
-    def print_it(self, directory, grammar_inv):
+    def print_it(self, directory, grammar_inv, symbol_list=None):
         if not os.path.exists(directory):
             os.makedirs(directory)
         with open(os.path.join(directory, self.fname + ".lg"), "w") as f:
@@ -84,15 +84,34 @@ class InkmlFile():
             f.write("# " + str(len(self.symbol_list)) + " objects (symbols)\n")
             f.write("# FORMAT:\n")
             f.write("# O, Object ID, Label, Weight, List of Primitive IDs (strokes in a symbol)\n")
-            for i in range(len(self.symbol_list)):
-                strokes = ""
-                for trace in self.symbol_list[i].trace_list:
-                    strokes += str(trace.id) + ", "
-                strokes = strokes[:-2]  # cut off the last comma
-                f.write("O, " + self.symbol_list[i].labelXML + ", " + grammar_inv[self.class_decisions[i]] +
-                        ", 1.0, " + strokes + "\n")
-            if self.relations is not None:
-                f.write("\n" + self.relations)
+            if symbol_list is None:  # use ground truth symbols for classification testing
+                for i in range(len(self.symbol_list)):
+                    strokes = ""
+                    for trace in self.symbol_list[i].trace_list:
+                        strokes += str(trace.id) + ", "
+                    strokes = strokes[:-2]  # cut off the last comma
+                    f.write("O, " + self.symbol_list[i].labelXML + ", " + grammar_inv[self.class_decisions[i]] +
+                            ", 1.0, " + strokes + "\n")
+                if self.relations is not None:
+                    f.write("\n" + self.relations)
+            else:  # the model is responsible for segmentation here
+                labels = {}  # for the labels keep a hash of what you have seen before to number them
+                for i in range(len(symbol_list)):  # symbol_list is [(class, [traceIDs])]
+                    class_decision = grammar_inv[symbol_list[i][0]]
+                    if class_decision in labels:
+                        labels[class_decision] += 1
+                        label = class_decision + "_" + str(labels[class_decision])
+                    else:
+                        labels[class_decision] = 1
+                        label = class_decision + "_1"
+                    strokes = ""
+                    for trace in symbol_list[i][1]:
+                        strokes += str(trace.id) + ", "
+                    strokes = strokes[:-2]  # cut off the last comma
+                    f.write("O, " + label + ", " + grammar_inv[class_decision] +
+                            ", 1.0, " + strokes + "\n")
+                if self.relations is not None:
+                    f.write("\n" + self.relations)
 
 
 class Parser():
