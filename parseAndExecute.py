@@ -61,15 +61,15 @@ def main():
         s = unpickle("split.pkl")
         print("\n######## Running feature extraction for training ########")
         f = FeatureExtraction(verbose)
-        if s.train_percent < 1:
-            xgrid_test, ytclass_test, inkmat_test = f.get_feature_set(s.test, False, verbose)
-            pickle_array(xgrid_test, "x_test.pkl")
-            pickle_array(ytclass_test, "y_test.pkl")
-            pickle_array(inkmat_test, "inkmat_test.pkl")
         xgrid_train, ytclass_train, inkmat_train = f.get_feature_set(s.train, True, verbose)
         pickle_array(xgrid_train, "x_train.pkl")
         pickle_array(ytclass_train, "y_train.pkl")
         pickle_array(inkmat_train, "inkmat_train.pkl")
+        if s.split_percent < 1:
+            xgrid_test, ytclass_test, inkmat_test = f.get_feature_set(s.test, False, verbose)
+            pickle_array(xgrid_test, "x_test.pkl")
+            pickle_array(ytclass_test, "y_test.pkl")
+            pickle_array(inkmat_test, "inkmat_test.pkl")
     elif extraction and not segment:  # For testing the classifier only
         p = unpickle("parsed_test.pkl")
         print("\n######## Running feature extraction for testing ########")
