@@ -102,8 +102,9 @@ def main():
             ytclass_test = unpickle("y_test.pkl")
             inkmat_test = unpickle("inkmat_test.pkl")
             c.test_classifiers(xgrid_test, test_targ=ytclass_test, inkml=inkmat_test)
-        # PERFORMING SEGMENTATION
-        # dynamic programming for segmentation, input inkml list, feature extractor, and classifier objects
+        # LAST STEP - PERFORMING SEGMENTATION
+        # Using dynamic programming for segmentation,
+        # input inkml list, feature extractor, and classifier objects
         else:  # testing = True, segment = True
             p = unpickle("parsed_test.pkl")
             f = FeatureExtraction(verbose)

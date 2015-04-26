@@ -5,9 +5,17 @@ from execute import *
 
 class Segmenter():
 
-        @staticmethod
-        def segment_inkml_files(test_data, feature_extractor, classifier):
-            #f = FeatureExtraction(verbose)
+        def __init__(self):
+
+            self.best_list = []
+            self.backtrack_list = []
+            self.bestclass_list = []
+            self.trace_ids = []
+            self.test_data = None
+
+        def segment_inkml_files(self, test_data, feature_extractor, classifier):
+
+            self.test_data = test_data
             best_list = []
             backtrack_list = []
             bestclass_list = []
@@ -16,41 +24,36 @@ class Segmenter():
                 best = []
                 backtrack = []
                 bestclass = []
-                #input to eval is a list of traces - need to get feature set for this
-                temp_symbol = Symbol(None,None,None,None,[trace_list[0]])
+                # input to eval is a list of traces - need to get feature set for this
+                temp_symbol = Symbol(None, None, None, None, [trace_list[0]])
                 feature_set = feature_extractor.get_single_feature_set(temp_symbol,0)
-                maxkey, maxdist = classifier.eval(feature_set,1,0)
+                maxkey, maxdist = classifier.eval(feature_set, 1, 0)
                 print("maxkey", maxkey)
                 print("maxdist", maxdist)
-                best.append(maxdist) #index 0
-                backtrack.append(-1) #indicates start of array
+                best.append(maxdist)  # index 0
+                backtrack.append(-1)  # indicates start of array
                 bestclass.append(maxkey)
                 for i in range(1, len(trace_list)):
                     print("-----")
                     best.append(float("-inf"))
                     backtrack.append(-1)
                     bestclass.append("temp")
-                    for j in range(i-1, -1,-1):
-                        #print(i, ", ", j, ", ", best[j])
+                    for j in range(i-1, -1, -1):
                         subset = trace_list[j+1:i+1]
                         print("subset: ", j+1, ", ", i+1)
-                        temp_symbol = Symbol(None,None,None,None,subset)
+                        temp_symbol = Symbol(None, None, None, None, subset)
                         feature_set = feature_extractor.get_single_feature_set(temp_symbol,0)
-                        maxkey, maxdist = classifier.eval(feature_set,len(subset),0)
-                        
+                        maxkey, maxdist = classifier.eval(feature_set, len(subset), 0)
                         print("maxkey: ", maxkey, "maxdist: ", maxdist)
                         dist = best[j] + maxdist
-                        #print(dist)
-                        #print(best[i])
                         if dist > best[i]:
-                            #print("got here")
                             best[i] = dist
                             backtrack[i] = j
                             bestclass[i] = maxkey
                     #special case: all traces up to and including i are one character
-                    temp_symbol = Symbol(None,None,None,None,trace_list[0:i+1])
+                    temp_symbol = Symbol(None, None, None, None, trace_list[0:i+1])
                     feature_set = feature_extractor.get_single_feature_set(temp_symbol,0)
-                    maxkey, maxdist = classifier.eval(feature_set,(i+1),0)
+                    maxkey, maxdist = classifier.eval(feature_set, (i+1), 0)
                     if maxdist > best[i]:
                         best[i] = maxdist
                         backtrack[i] = -1
@@ -68,4 +71,11 @@ class Segmenter():
                 trace_ids = []
                 for trace in trace_list:
                     trace_ids.append(trace.id)
-            return best_list, backtrack_list, bestclass_list, trace_ids
+            self.best_list = best_list
+            self.backtrack_list = backtrack_list
+            self.bestclass_list = bestclass_list
+            self.trace_ids = trace_ids
+
+        def backtrack(self):
+
+
