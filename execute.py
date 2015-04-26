@@ -30,7 +30,7 @@ def main():
 
     # STEP 1 - PARSING
     if parsing:
-        print("\n############ Parsing input data ############")
+        print("\n## Parsing input data ##")
         p = Parser(verbose, grammar_file)
         p.parse(filelist)
         print("Parsed", len(p.parsed_inkml), "InkML files")
@@ -43,8 +43,9 @@ def main():
 
     # STEP 2 - SPLITTING
     if splitting:
+        assert os.path.isfile("parsed_train.pkl"), "You must have parsed the input data before splitting it"
         p = unpickle("parsed_train.pkl")
-        print("\n########### Splitting input data for training ###########")
+        print("\n## Splitting input data for training ##")
         s = Split(p.parsed_inkml, p.grammar, verbose, train_percent)
         if train_percent < 1:
             s.optimize_kl()
@@ -56,8 +57,9 @@ def main():
 
     # STEP 3 - EXTRACTION
     if extraction and not testing:
+        assert os.path.isfile("split.pkl"), "You must have split the input data before feature extraction"
         s = unpickle("split.pkl")
-        print("\n######## Running feature extraction for training ########")
+        print("\n## Running feature extraction for training ##")
         f = FeatureExtraction(verbose)
         xgrid_train, ytclass_train, inkmat_train = f.get_feature_set(s.train, True, verbose)
         pickle_array(xgrid_train, "x_train.pkl")
@@ -68,10 +70,13 @@ def main():
             pickle_array(xgrid_test, "x_test.pkl")
             pickle_array(ytclass_test, "y_test.pkl")
             pickle_array(inkmat_test, "inkmat_test.pkl")
+        pickle_array(f, "features.pkl")
     elif extraction and not segment:  # For testing the classifier only
+        assert os.path.isfile("parsed_test.pkl"), "You must have parsed test data before testing the classifier"
+        assert os.path.isfile("features.pkl"), "You must have a trained feature extractor before testing"
         p = unpickle("parsed_test.pkl")
-        print("\n######## Running feature extraction for testing ########")
-        f = FeatureExtraction(verbose)
+        f = unpickle("features.pkl")
+        print("\n## Running feature extraction for testing ##")
         xgrid_test, ytclass_test, inkmat_test = f.get_feature_set(p.parsed_inkml, False, verbose)
         pickle_array(xgrid_test, "x_test.pkl")
         pickle_array(ytclass_test, "y_test.pkl")
@@ -79,37 +84,51 @@ def main():
 
     # STEP 3 - TRAINING CLASSIFIER
     if not testing:
+        assert os.path.isfile("parsed_train.pkl"), "You must have parsed training data before training the classifier"
+        assert os.path.isfile("split.pkl"), "You must have split the training data before training the classifier"
+        assert os.path.isfile("x_train.pkl") and os.path.isfile("y_train.pkl") and os.path.isfile("inkmat_train.pkl"), \
+            "You must have performed feature extraction before training the classifier"
         p = unpickle("parsed_train.pkl")
         s = unpickle("split.pkl")
         xgrid_train = unpickle("x_train.pkl")
         ytclass_train = unpickle("y_train.pkl")
         inkmat_train = unpickle("inkmat_train.pkl")
-        print("\n########## Training the classifier #########")
+        print("\n## Training the classifier ##")
         c = Classifier(param_dir=default_model_out, train_data=xgrid_train, train_targ=ytclass_train,
                        inkml=inkmat_train, grammar=p.grammar_inv, verbose=verbose, outdir=default_lg_out)
         # Can test the classifer on the held out data
         if not segment and s.split_percent < 1:
+            assert os.path.isfile("x_test.pkl") and os.path.isfile("y_test.pkl") and os.path.isfile("inkmat_test.pkl"),\
+                "You must have performed feature extraction on held out data before testing the classifier"
             xgrid_test = unpickle("x_test.pkl")
             ytclass_test = unpickle("y_test.pkl")
             inkmat_test = unpickle("inkmat_test.pkl")
             c.test_classifiers(xgrid_test, test_targ=ytclass_test, inkml=inkmat_test)
     else:
-        p = unpickle("parsed_test.pkl")
         c = Classifier(param_dir=default_model_out, testing=testing, grammar=p.grammar_inv,
                        verbose=verbose, outdir=default_lg_out, model=model)
-        if not segment:  # JUST FOR TESTING THE CLASSIFIER
+        # Just for testing the classifier, no segmentation required
+        if not segment:
+            assert os.path.isfile("x_test.pkl") and os.path.isfile("y_test.pkl") and os.path.isfile("inkmat_test.pkl"),\
+                "You must have performed feature extraction on held out data before testing the classifier"
             xgrid_test = unpickle("x_test.pkl")
             ytclass_test = unpickle("y_test.pkl")
             inkmat_test = unpickle("inkmat_test.pkl")
             c.test_classifiers(xgrid_test, test_targ=ytclass_test, inkml=inkmat_test)
-        # LAST STEP - PERFORMING SEGMENTATION
+        # STEP 4 - SEGMENTATION
         # Using dynamic programming for segmentation,
         # input inkml list, feature extractor, and classifier objects
         else:  # testing = True, segment = True
-            p = unpickle("parsed_test.pkl")
-            f = FeatureExtraction(verbose)
+            assert os.path.isfile("features.pkl"), "You must have a trained feature extractor before segmentation"
+            f = unpickle("features.pkl")
+            # two cases - if there was a split, want to use the testing split
+            # otherwise, use previously parsed data
+            if splitting:
+                inkml = unpickle("split.pkl").test
+            else:
+                inkml = unpickle("parsed_test.pkl").parsed_inkml
             seg = Segmenter()
-            seg.segment_inkml_files(p.parsed_inkml, f, c)
+            seg.segment_inkml_files(inkml, f, c)
 
 
 if __name__ == '__main__':
