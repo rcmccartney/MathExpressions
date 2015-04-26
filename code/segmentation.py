@@ -19,6 +19,7 @@ class Segmenter():
             best_list = []
             backtrack_list = []
             bestclass_list = []
+            trace_ids_list = []
             for inkmlfile in test_data:
                 trace_list = inkmlfile.get_trace_list()
                 best = []
@@ -67,14 +68,17 @@ class Segmenter():
                 best_list.append(best)
                 backtrack_list.append(backtrack)
                 bestclass_list.append(bestclass)
+                
                 #get the trace id's
                 trace_ids = []
                 for trace in trace_list:
                     trace_ids.append(trace.id)
+                trace_ids_list.append(trace_ids)
+                    
             self.best_list = best_list
             self.backtrack_list = backtrack_list
             self.bestclass_list = bestclass_list
-            self.trace_ids = trace_ids
+            self.trace_ids = trace_ids_list
 
         def backtrack(self):
 
