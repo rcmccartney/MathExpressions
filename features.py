@@ -182,6 +182,39 @@ class FeatureExtraction():
         totalfeatures = rowwise + colwise
         return np.asarray(totalfeatures)
 
+    @staticmethod
+    def fki_num_black_col(image_mat):
+        return np.sum(image_mat, axis=0)
+        
+    @staticmethod
+    def fki_center_grav_col(image_mat):
+        H = image_mat.shape[0]
+        indices = np.indices(image_mat.shape)[0]
+        image_mod = np.multiply(image_mat, indices)
+        image_mod /= H
+        return np.sum(image_mod, axis=0)
+        
+    @staticmethod
+    def fki_sec_moment_col(image_mat):
+        H2 = (image_mat.shape[0])**2
+        indices = np.indices(image_mat.shape)[0]
+        indices2 = np.multiply(indices, indices)
+        image_mod = np.multiply(image_mat, indices)
+        image_mod /= H2
+        return np.sum(image_mod, axis=0)
+        
+    @staticmethod
+    def fki_upcontour_col(image_mat):
+        indices = np.indices(image_mat.shape)[0]
+        image_mod = np.multiply(indices, image_mat)
+        return np.amin(image_mod, axis=0)
+        
+    @staticmethod
+    def fki_lowcontour_col(image_mat):
+        indices = np.indices(image_mat.shape)[0]
+        image_mod = np.multiply(indices, image_mat)
+        return np.amax(image_mod, axis=0)
+        
     def image_pca(self, images, trainPCA = True, components=10): #trainPCA means generate new components from input set
         print("val: ", trainPCA)
         if( trainPCA ):
@@ -194,7 +227,7 @@ class FeatureExtraction():
         symbol_size = 0  # get the size to pre-alocate the array
         for inkml in inkml_file_list:
             symbol_size += len(inkml.symbol_list)
-        x_grid = np.zeros((symbol_size, 69))  # 69 is number of features we have
+        x_grid = np.zeros((symbol_size, 174))  # 69 is number of features we have
         y_true_class = []
         inkml_file_ref = []
         pixel_axis = 20
@@ -218,8 +251,14 @@ class FeatureExtraction():
                 x_grid[curr, 6] = self.get_mean(ytrans)
                 x_grid[curr, 7] = self.get_aspect_ratio(symbol)
                 x_grid[curr, 8:33] = self.get_fuzzy_histogram_distance(xtrans, ytrans)
-                x_grid[curr, 33:69] = self.get_all_crosses_maxmin(np.reshape(images[curr],
-                                                                            (pixel_axis+1, pixel_axis+1)), 5)
+                
+                image_curr = np.reshape(images[curr], (pixel_axis+1, pixel_axis+1))
+                x_grid[curr, 33:69] = self.get_all_crosses_maxmin(image_curr, 5)
+                x_grid[curr, 69:90] = self.fki_num_black_col(image_curr)
+                x_grid[curr, 90:111] = self.fki_center_grav_col(image_curr)
+                x_grid[curr, 111:132] = self.fki_sec_moment_col(image_curr)
+                x_grid[curr, 132:153] = self.fki_upcontour_col(image_curr)
+                x_grid[curr, 153:174] = self.fki_lowcontour_col(image_curr)
                 #x.extend(image.flatten())
                 y_true_class.append(symbol.label_index)
                 inkml_file_ref.append((inkml_file, symbol))
@@ -237,7 +276,7 @@ class FeatureExtraction():
         
     def get_single_feature_set(self, symbol, verbose):
         symbol_size = 1  # get the size to pre-alocate the array
-        x_grid = np.zeros((symbol_size, 69))  # 69 is number of features we have
+        x_grid = np.zeros((symbol_size, 174))  # 69 is number of features we have
         pixel_axis = 20
         size = (pixel_axis+1)*(pixel_axis+1)
         images = np.zeros((symbol_size, size))
@@ -256,8 +295,14 @@ class FeatureExtraction():
         x_grid[curr, 6] = self.get_mean(ytrans)
         x_grid[curr, 7] = self.get_aspect_ratio(symbol)
         x_grid[curr, 8:33] = self.get_fuzzy_histogram_distance(xtrans, ytrans)
-        x_grid[curr, 33:69] = self.get_all_crosses_maxmin(np.reshape(images[curr],
-                                                                    (pixel_axis+1, pixel_axis+1)), 5)
+        
+        image_curr = np.reshape(images[curr], (pixel_axis+1, pixel_axis+1))
+        x_grid[curr, 33:69] = self.get_all_crosses_maxmin(image_curr, 5)
+        x_grid[curr, 69:90] = self.fki_num_black_col(image_curr)
+        x_grid[curr, 90:111] = self.fki_center_grav_col(image_curr)
+        x_grid[curr, 111:132] = self.fki_sec_moment_col(image_curr)
+        x_grid[curr, 132:153] = self.fki_upcontour_col(image_curr)
+        x_grid[curr, 153:174] = self.fki_lowcontour_col(image_curr)
         #x.extend(image.flatten())
         curr += 1
         ## OFFLINE FEATURES
