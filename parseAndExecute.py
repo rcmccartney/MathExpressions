@@ -5,6 +5,7 @@ import subprocess
 from split import *
 from features import *
 from classifier import *
+from segmentation import *
 from profilehooks17.profilehooks import *
 
 
@@ -386,60 +387,10 @@ def main():
         c = Classifier(param_dir=default_param_out, train_data=xgrid_train, train_targ=ytclass_train,
                        inkml=inkmat_train, grammar=p.grammar_inv, verbose=verbose, outdir=default_lg_out)
                        
-                       
-        #f = FeatureExtraction(verbose)
-        for inkmlfile in s.test:
-            trace_list = inkmlfile.get_trace_list()
-            best = []
-            backtrack = []
-            bestclass = []
-            
-            #input to eval is a list of traces - need to get feature set for this
-            
-            temp_symbol = Symbol(None,None,None,None,[trace_list[0]])
-            feature_set = f.get_single_feature_set(temp_symbol,0)
-            maxkey, maxdist = c.eval(feature_set,1,0)
-            print("maxkey", maxkey)
-            print("maxdist", maxdist)
-            best.append(maxdist) #index 0
-            backtrack.append(-1) #indicates start of array
-            bestclass.append(maxkey)
-            for i in range(1, len(trace_list)):
-                print("-----")
-                best.append(float("-inf"))
-                backtrack.append(-1)
-                bestclass.append("temp")
-                for j in range(i-1, -1,-1):
-                    #print(i, ", ", j, ", ", best[j])
-                    subset = trace_list[j+1:i+1]
-                    print("subset: ", j+1, ", ", i+1)
-                    temp_symbol = Symbol(None,None,None,None,subset)
-                    feature_set = f.get_single_feature_set(temp_symbol,0)
-                    maxkey, maxdist = c.eval(feature_set,len(subset),0)
-                    
-                    print("maxkey: ", maxkey, "maxdist: ", maxdist)
-                    dist = best[j] + maxdist
-                    #print(dist)
-                    #print(best[i])
-                    if dist > best[i]:
-                        #print("got here")
-                        best[i] = dist
-                        backtrack[i] = j
-                        bestclass[i] = maxkey
-                #special case: all traces up to and including i are one character
-                temp_symbol = Symbol(None,None,None,None,trace_list[0:i+1])
-                feature_set = f.get_single_feature_set(temp_symbol,0)
-                maxkey, maxdist = c.eval(feature_set,(i+1),0)
-                if maxdist > best[i]:
-                    best[i] = maxdist
-                    backtrack[i] = -1
-                    bestclass[i] = maxkey
-            print(best)
-            print(backtrack)
-            print(bestclass)
-            print("")
-            print("")
-            print("")
+        #dynamic programming for segmentation, input inkml list, feature extractor, and classifier objects
+        seg = Segmenter()
+        seg.segment_inkml_files(s.test, f, c)
+        
     # TESTING PATH OF EXECUTION
     else:
         print("\n######## Running feature extraction ########")
