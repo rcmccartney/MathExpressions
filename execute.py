@@ -113,7 +113,7 @@ def main():
         ytclass_test = unpickle("y_test.pkl")
         inkmat_test = unpickle("inkmat_test.pkl")
         p = unpickle("parsed_test.pkl")
-        c = Classifier(param_dir=default_model_out, testing=testing, grammar=p.grammar_inv,
+        c = Classifier(param_dir=default_model_out, testing=True, grammar=p.grammar_inv,
                        verbose=verbose, outdir=default_lg_out, model=model)
         c.test_classifiers(xgrid_test, test_targ=ytclass_test, inkml=inkmat_test)
 
