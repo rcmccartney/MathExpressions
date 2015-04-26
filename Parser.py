@@ -1,8 +1,7 @@
 import subprocess
 import xml.etree.ElementTree as ET
-from features import *
-from classifier import *
-
+import numpy as np
+import os
 
 class Trace():
     """ This class represents a trace of (x,y) coordinates within a single symbol """
@@ -28,20 +27,11 @@ class Symbol():
     """ This class represents a single Symbol to be classified """
 
     def __init__(self, num_in_inkml, label, labelXML, label_index, trace_list):
-        if label != ",":
-            self.label = label
-        else:
-            self.label = "COMMA"
-        if labelXML[0:2] != ",_":
-            self.labelXML = labelXML
-        else:
-            self.labelXML = "COMMA" + labelXML[1:]
+        self.label = label
+        self.labelXML = labelXML
         self.label_index = label_index
         self.trace_list = trace_list
         self.num_in_inkml = num_in_inkml
-
-    def print_traces(self):
-        FeatureExtraction.convert_and_plot(self.trace_list)
 
     def get_all_points(self):
         xtemp = []
@@ -144,6 +134,7 @@ class Parser():
         inkmlfilelist = []
 
         for filename in filelist:
+            print("parsing", filename)
             num_in_inkml = 0
             with open(filename, 'r') as filexml:
                 tree = ET.parse(filexml)
@@ -159,14 +150,13 @@ class Parser():
             toptracegroup = root.find('inkml:traceGroup', ns)
             for subTraceGroup in toptracegroup.findall('inkml:traceGroup', ns):  # for each symbol
                 try:
-                    annotationXMLelement = subTraceGroup.find('inkml:annotationXML',ns)
+                    annotationXMLelement = subTraceGroup.find('inkml:annotationXML', ns)
                     if annotationXMLelement is None or annotationXMLelement.attrib['href'] is None:
                         annotationXML = "No_Label"
                     else:
                         annotationXML = annotationXMLelement.attrib['href']
-
-                except:
-                    print("Error in", filename)
+                except Exception as e:
+                    print("Error in", filename, ":", e)
                     exit()
                 annotation = subTraceGroup.find('inkml:annotation', ns).text
                 if annotation is None:
@@ -180,6 +170,8 @@ class Parser():
                 # find what index this symbol corresponds to
                 if annotation == ",":
                     annotation = "COMMA"
+                if annotationXML == ",_":
+                    annotationXML = "COMMA" + annotationXML[1:]
                 assert annotation in self.grammar, "Error: " + annotation + " is not defined in the grammar"
                 label_index = self.grammar[annotation]
                 symbollist.append(Symbol(num_in_inkml, annotation, annotationXML, label_index, tracelist))
@@ -194,14 +186,15 @@ class Parser():
         # store the results
         self.parsed_inkml = inkmlfilelist
 
-    def print_results(self):
+    def print_results(self, traces=False):
         """ Prints all of the files parsed by the system """
         for file in self.parsed_inkml:
             print("file:", file.label, "filename", file.fname)
             for symbol in file.symbol_list:
                 print('\t', "symbol:", symbol.label, "index:", symbol.label_index)
-                for trace in symbol.trace_list:
-                    print('\t\t', "trace:", str(trace.id))
-                    print(trace.x)
-                    print(trace.y)
+                if traces:
+                    for trace in symbol.trace_list:
+                        print('\t\t', "trace:", str(trace.id))
+                        print(trace.x)
+                        print(trace.y)
             print()

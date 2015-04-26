@@ -2,6 +2,7 @@ from features import *
 from classifier import *
 from parseAndExecute import *
 
+
 class Segmenter():
 
         @staticmethod
@@ -15,9 +16,7 @@ class Segmenter():
                 best = []
                 backtrack = []
                 bestclass = []
-                
                 #input to eval is a list of traces - need to get feature set for this
-                
                 temp_symbol = Symbol(None,None,None,None,[trace_list[0]])
                 feature_set = feature_extractor.get_single_feature_set(temp_symbol,0)
                 maxkey, maxdist = classifier.eval(feature_set,1,0)
