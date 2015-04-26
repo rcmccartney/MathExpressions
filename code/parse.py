@@ -106,7 +106,7 @@ class InkmlFile():
                         label = class_decision + "_1"
                     strokes = ""
                     for trace in symbol_list[i][1]:
-                        strokes += str(trace.id) + ", "
+                        strokes += str(trace) + ", "
                     strokes = strokes[:-2]  # cut off the last comma
                     f.write("O, " + label + ", " + grammar_inv[class_decision] +
                             ", 1.0, " + strokes + "\n")
