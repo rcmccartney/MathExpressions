@@ -19,6 +19,7 @@ class Split():
         self.verbose = verbose
         self.num_classes = len(grammar)
         self.grammar = grammar
+        self.split_percent = split_percent
         # make a purely random split
         for item in inkmllist:
             if random.random() <= split_percent:

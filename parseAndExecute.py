@@ -26,7 +26,7 @@ def main():
     """
     This is the pipeline of the system
     """
-    parsing, extraction, testing, train_percent, \
+    parsing, splitting, extraction, testing, train_percent, \
         segment, model, filelist, default_model_out, \
         default_lg_out, verbose, grammar_file = parse_cl(sys.argv)
 
@@ -43,19 +43,25 @@ def main():
         else:
             pickle_array(p, "parsed_test.pkl")
 
-    # STEP 2 - SPLITTING AND EXTRACTION
-    if extraction and not testing and not segment:
+    # STEP 2 - SPLITTING
+    if splitting:
         p = unpickle("parsed_train.pkl")
         print("\n########### Splitting input data for training ###########")
         s = Split(p.parsed_inkml, p.grammar, verbose, train_percent)
+        if train_percent < 1:
+            s.optimize_kl()
         if verbose == 2:
             for inkmlFile in s.train:
                 for symbol in inkmlFile.symbol_list:
                     print(inkmlFile.fname, symbol.label)
+        pickle_array(s, "split.pkl")
+
+    # STEP 3 - EXTRACTION
+    if extraction and not testing:
+        s = unpickle("split.pkl")
         print("\n######## Running feature extraction for training ########")
         f = FeatureExtraction(verbose)
-        if train_percent < 1:
-            s.optimize_kl()
+        if s.train_percent < 1:
             xgrid_test, ytclass_test, inkmat_test = f.get_feature_set(s.test, False, verbose)
             pickle_array(xgrid_test, "x_test.pkl")
             pickle_array(ytclass_test, "y_test.pkl")
@@ -64,7 +70,7 @@ def main():
         pickle_array(xgrid_train, "x_train.pkl")
         pickle_array(ytclass_train, "y_train.pkl")
         pickle_array(inkmat_train, "inkmat_train.pkl")
-    elif extraction and not segment:
+    elif extraction and not segment:  # For testing the classifier only
         p = unpickle("parsed_test.pkl")
         print("\n######## Running feature extraction for testing ########")
         f = FeatureExtraction(verbose)
@@ -81,7 +87,6 @@ def main():
         print("\n########## Training the classifier #########")
         c = Classifier(param_dir=default_model_out, train_data=xgrid_train, train_targ=ytclass_train,
                        inkml=inkmat_train, grammar=p.grammar_inv, verbose=verbose, outdir=default_lg_out)
-
     else:
         c = Classifier(param_dir=default_model_out, testing=testing, grammar=p.grammar_inv,
                        verbose=verbose, outdir=default_lg_out, model=model)

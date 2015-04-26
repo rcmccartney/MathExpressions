@@ -6,10 +6,11 @@ def print_usage():
     """ Prints correct usage of the program and exits """
     print("$ python3 execute.py [flag] [arguments]")
     print("flags:")
-    print("  -p  <file>          : perform parsing and save to file")
-    print("  -e  <dir>           : perform feature extraction and save to dir")
-    print("  -tc <percent>       : train classifier on <percent>% of data")
-    print("  -s                  : perform segmentation & testing")
+    print("  -p                  : perform parsing and save to file")
+    print("  -s <percent>        : perform splitting on <percent>% of data (bt 0 and 1) and save to file")
+    print("  -e                  : perform feature extraction and save to dir")
+    print("  -tc                 : train classifier")
+    print("  -seg                : perform segmentation & testing")
     print("  -m  [name]          : specify model to use (inside models dir)")
     print("      Options: '1nn.pkl' - 1-nearest neighbor")
     print("               'rf.pkl' - random forest")
@@ -39,6 +40,7 @@ def parse_cl(args):
     testing = True
     train_percent = 0.7
     segment = False
+    splitting = False
     model = "rf.pkl"
     filelist = []
     default_model_out = os.path.realpath("models")
@@ -57,20 +59,25 @@ def parse_cl(args):
         args.remove("-e")
         extraction = True
         print("-e : performing feature extraction")
-    # training setting
-    if "-tc" in args:
-        index = args.index("-tc")
+    # splitting setting
+    if "-s" in args:
+        index = args.index("-s")
         if index < len(args)-1 and "-" not in args[index+1]:
             train_percent = float(args[index+1])
             args.remove(args[index+1])
+        args.remove("-s")
+        splitting = True
+        print("-s : splitting the data with", train_percent, "of the data for training")
+    # training setting
+    if "-tc" in args:
         args.remove("-tc")
         testing = False
-        print("-tc : training the classifier with", train_percent, "of the data")
+        print("-tc : training the classifier")
     # segmentation setting
-    if "-s" in args:
-        args.remove("-s")
+    if "-seg" in args:
+        args.remove("-seg")
         segment = True
-        print("-s : performing segmentation")
+        print("-seg : performing segmentation")
     # model setting
     if "-m" in args:
         index = args.index("-m")
@@ -129,6 +136,6 @@ def parse_cl(args):
         print("Usage error:")
         print_usage()
 
-    return (parsing, extraction, testing, train_percent,
+    return (parsing, splitting, extraction, testing, train_percent,
             segment, model, filelist, default_model_out,
             default_lg_out, verbose, grammar_file)

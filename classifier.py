@@ -35,11 +35,11 @@ class Classifier():
     def train_classifiers(self):
         """ Trains the classifiers being used.  Modify this to introduce other classifiers """
 
-        self.train_classifier("1-nn", "1nn", KnnClassifier(k=1))
-        self.train_classifier("AdaBoost", "bdt",  AdaBoostClassifier(DecisionTreeClassifier(max_depth=8),
-                                 algorithm="SAMME", n_estimators=200))
+        #self.train_classifier("1-nn", "1nn", KnnClassifier(k=1))
+        #self.train_classifier("AdaBoost", "bdt",  AdaBoostClassifier(DecisionTreeClassifier(max_depth=8),
+         #                        algorithm="SAMME", n_estimators=200))
         self.train_classifier("Random Forest", "rf", RandomForestClassifier(n_estimators=200))
-        self.train_classifier("SVM w/ RBF kernel", "rbf_svm", svm.SVC(kernel='rbf'))
+        #self.train_classifier("SVM w/ RBF kernel", "rbf_svm", svm.SVC(kernel='rbf'))
 
     def make_lg(self, output, inkml, dirname):
         # fill in the inkmls with this output decision
