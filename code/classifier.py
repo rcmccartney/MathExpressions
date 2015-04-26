@@ -69,7 +69,8 @@ class Classifier():
             self.print_confusion(self.train_target, out)
 
     def eval(self, feature_set, num_traces):
-        model_temp = self.classifiers[0]
+        # the model is stored in a tuple along with its name
+        model_temp = self.classifiers[0][2]
         outprob = model_temp.predict_proba(feature_set)
         print("model output prob: ", outprob)
         max_prob = -1
