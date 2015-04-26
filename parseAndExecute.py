@@ -5,7 +5,7 @@ from commandLineOpts import parse_cl
 from split import *
 from features import *
 from classifier import *
-from parser import *
+from parse import *
 from segmentation import *
 from profilehooks17.profilehooks import *
 

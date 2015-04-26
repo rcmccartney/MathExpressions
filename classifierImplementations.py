@@ -1,3 +1,4 @@
+"""
 from pybrain.datasets import ClassificationDataSet, SequenceClassificationDataSet
 from pybrain.utilities import percentError
 from pybrain.supervised.trainers import BackpropTrainer
@@ -7,6 +8,7 @@ from pybrain.supervised import RPropMinusTrainer
 from pybrain.tools.validation import testOnSequenceData
 from pybrain.tools.shortcuts import buildNetwork
 from pylab import plot, hold, show
+"""
 
 import numpy as np
 import scipy.stats
@@ -59,8 +61,9 @@ class KnnClassifier():
             out_probs.append(pseudo_prob)
         return out_probs
 
+"""
 class FFNeural():
-    """ Uses pybrain for two neural network implementations """
+    # Uses pybrain for two neural network implementations
 
     def __init__(self, numclasses):
         self.numclasses = numclasses
@@ -104,7 +107,7 @@ class FFNeural():
 
 
 class LSTMNeural():
-    """ Uses pybrain for two neural network implementations """
+    # Uses pybrain for two neural network implementations
 
     def __init__(self, numclasses):
         self.numclasses = numclasses
@@ -144,3 +147,4 @@ class LSTMNeural():
             data.appendLinked(x[i], y[i])
         data._convertToOneOfMany(bounds=[0., 1.])  # changes output to vector of 0's and 1's
         return data
+"""
