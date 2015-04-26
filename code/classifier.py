@@ -6,7 +6,7 @@ import pickle
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
-from classifierImplementations import *
+from code.classifierImplementations import *
 from sklearn import svm
 from sklearn.externals import joblib
 
@@ -38,7 +38,8 @@ class Classifier():
         #self.train_classifier("1-nn", "1nn", KnnClassifier(k=1))
         #self.train_classifier("AdaBoost", "bdt",  AdaBoostClassifier(DecisionTreeClassifier(max_depth=8),
          #                        algorithm="SAMME", n_estimators=200))
-        self.train_classifier("Random Forest", "rf", RandomForestClassifier(n_estimators=400, max_depth=18, verbose=1))
+        self.train_classifier("Random Forest", "rf", RandomForestClassifier(n_estimators=500, max_depth=18,
+                                                                            n_jobs=-1, verbose=1))
         #self.train_classifier("SVM w/ RBF kernel", "rbf_svm", svm.SVC(kernel='rbf'))
 
     def make_lg(self, output, inkml, dirname):

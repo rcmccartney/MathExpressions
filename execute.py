@@ -1,13 +1,11 @@
-import os
 import sys
-import pickle
-from commandLineOpts import parse_cl
-from split import *
-from features import *
-from classifier import *
-from parse import *
-from segmentation import *
-from profilehooks17.profilehooks import *
+from code.commandLineOpts import parse_cl
+from code.split import *
+from code.features import *
+from code.classifier import *
+from code.parse import *
+from code.segmentation import *
+#from profilehooks17.profilehooks import *
 
 
 def pickle_array(mat, name):
@@ -21,7 +19,7 @@ def unpickle(name):
     return tmp
 
 
-@profile
+#@profile
 def main():
     """
     This is the pipeline of the system
@@ -81,13 +79,22 @@ def main():
 
     # STEP 3 - TRAINING CLASSIFIER
     if not testing:
+        p = unpickle("parsed_train.pkl")
+        s = unpickle("split.pkl")
         xgrid_train = unpickle("x_train.pkl")
         ytclass_train = unpickle("y_train.pkl")
         inkmat_train = unpickle("inkmat_train.pkl")
         print("\n########## Training the classifier #########")
         c = Classifier(param_dir=default_model_out, train_data=xgrid_train, train_targ=ytclass_train,
                        inkml=inkmat_train, grammar=p.grammar_inv, verbose=verbose, outdir=default_lg_out)
+        # Can test the classifer on the held out data
+        if not segment and s.split_percent < 1:
+            xgrid_test = unpickle("x_test.pkl")
+            ytclass_test = unpickle("y_test.pkl")
+            inkmat_test = unpickle("inkmat_test.pkl")
+            c.test_classifiers(xgrid_test, test_targ=ytclass_test, inkml=inkmat_test)
     else:
+        p = unpickle("parsed_test.pkl")
         c = Classifier(param_dir=default_model_out, testing=testing, grammar=p.grammar_inv,
                        verbose=verbose, outdir=default_lg_out, model=model)
         if not segment:  # JUST FOR TESTING THE CLASSIFIER

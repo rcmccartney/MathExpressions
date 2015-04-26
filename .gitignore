@@ -15,6 +15,9 @@ output/
 models/
 models_2/
 
+# don't include pickled data
+*.pkl
+
 # Folder config file
 Desktop.ini
 

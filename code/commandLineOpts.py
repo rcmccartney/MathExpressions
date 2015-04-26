@@ -127,11 +127,9 @@ def parse_cl(args):
                 filelist.append(os.path.join(arg, filename))
     elif args[1] == "-l":  # operate on a filelist
         path = os.path.dirname(os.path.realpath(args[2]))
-        print(path)
-        f = open(args[2])
-        for line in f:
-            filelist.append(os.path.join(path, os.path.normcase(line.strip())))
-            f.close()
+        with open(args[2], 'r') as f:
+            for line in f:
+                filelist.append(os.path.join(path, os.path.normcase(line.strip())))
     else:
         print("Usage error:")
         print_usage()

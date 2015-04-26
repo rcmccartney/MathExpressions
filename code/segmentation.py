@@ -1,6 +1,6 @@
-from features import *
-from classifier import *
-from parseAndExecute import *
+from code.features import *
+from code.classifier import *
+from execute import *
 
 
 class Segmenter():

@@ -50,10 +50,10 @@ class InkmlFile():
         self.fname = self.get_fname(fname)
         self.symbol_list = symbol_list
         self.class_decisions = [0]*len(symbol_list)
+        self.relations = None
         # call the crohmeToLg tool in order to get the relationship info
         if auto_segment:
             try:
-                self.relations = None
                 perl_out = subprocess.check_output(["perl", "crohme2lg.pl", "-s", fname])
                 # decode the binary that is returned into a string
                 string_out = perl_out.decode("utf-8")
