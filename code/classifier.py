@@ -68,20 +68,14 @@ class Classifier():
         if self.verbose == 1:
             self.print_confusion(self.train_target, out)
 
-    def eval(self, feature_set, num_traces, model_index):
-        model_temp = self.classifiers[model_index][2]
-        out = model_temp.predict(feature_set)
-        #print("model prediction: ", out)
-        if model_index == 0: #knn predict_proba is different
-            outprob = model_temp.predict_proba(feature_set,out)
-            return out[0], math.log(outprob[0])*num_traces
-        else:
-            outprob = model_temp.predict_proba(feature_set)
+    def eval(self, feature_set, num_traces):
+        model_temp = self.classifiers[0]
+        outprob = model_temp.predict_proba(feature_set)
         print("model output prob: ", outprob)
         max_prob = -1
         max_class = ""
         model_class_list = model_temp.classes_
-        for i in range(len(outprob[0])): #outprob returns list
+        for i in range(len(outprob[0])):  # outprob returns list
             if outprob[0][i] > max_prob:
                 max_prob = outprob[0][i]
                 max_class = model_class_list[i]

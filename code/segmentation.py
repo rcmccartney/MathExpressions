@@ -28,7 +28,7 @@ class Segmenter():
                 # input to eval is a list of traces - need to get feature set for this
                 temp_symbol = Symbol(None, None, None, None, [trace_list[0]])
                 feature_set = feature_extractor.get_single_feature_set(temp_symbol,0)
-                maxkey, maxdist = classifier.eval(feature_set, 1, 0)
+                maxkey, maxdist = classifier.eval(feature_set, 1)
                 print("maxkey", maxkey)
                 print("maxdist", maxdist)
                 best.append(maxdist)  # index 0
@@ -44,7 +44,7 @@ class Segmenter():
                         print("subset: ", j+1, ", ", i+1)
                         temp_symbol = Symbol(None, None, None, None, subset)
                         feature_set = feature_extractor.get_single_feature_set(temp_symbol,0)
-                        maxkey, maxdist = classifier.eval(feature_set, len(subset), 0)
+                        maxkey, maxdist = classifier.eval(feature_set, len(subset))
                         print("maxkey: ", maxkey, "maxdist: ", maxdist)
                         dist = best[j] + maxdist
                         if dist > best[i]:
@@ -54,7 +54,7 @@ class Segmenter():
                     #special case: all traces up to and including i are one character
                     temp_symbol = Symbol(None, None, None, None, trace_list[0:i+1])
                     feature_set = feature_extractor.get_single_feature_set(temp_symbol,0)
-                    maxkey, maxdist = classifier.eval(feature_set, (i+1), 0)
+                    maxkey, maxdist = classifier.eval(feature_set, (i+1))
                     if maxdist > best[i]:
                         best[i] = maxdist
                         backtrack[i] = -1
