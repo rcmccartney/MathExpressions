@@ -34,6 +34,9 @@ EXAMPLES:
 To train the classifier model with a 0.7 / 0.3 split of data (with files listed files.txt):
 $ python3 execute.py -p -e -s 0.7 -tc -v 1 -l files.txt
 
+To train the classifier model on all of some pre-parsed data (from an earlier execution with -p):
+$ python3 execute.py -e -s 1.0 -tc -v 2
+
 Then to run segmentation with this trained classifier:
 $ python3 execute.py -seg
 

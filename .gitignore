@@ -13,6 +13,7 @@ __pycache__/
 images/
 models/
 output/
+data/
 
 # don't include pickled data
 *.pkl
