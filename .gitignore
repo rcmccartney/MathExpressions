@@ -12,6 +12,7 @@ __pycache__/
 # too large, 2 GB of data
 images/
 models/
+output/
 
 # don't include pickled data
 *.pkl
