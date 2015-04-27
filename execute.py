@@ -136,19 +136,24 @@ def main():
                            verbose=verbose, outdir=default_lg_out, model=model)
             seg = Segmenter(grammar=p.grammar_inv)
             print("\n## Segmenting the training data ##")
+            # USING A SUBSET DUE TO TIME CONSTRAINTS
+            c.verbose = 0
+            f.verbose = 0
             seg.segment_inkml_files(s.train, f, c)
-            seg.backtrack_and_print(os.path.join(default_lg_out, "train", model.remove(".pkl")))
+            seg.backtrack_and_print(os.path.join(default_lg_out, "train", model.replace(".pkl", "")))
             if s.split_percent < 1:
                 seg.segment_inkml_files(s.test, f, c)
-                seg.backtrack_and_print(os.path.join(default_lg_out, "test", model.remove(".pkl")))
+                seg.backtrack_and_print(os.path.join(default_lg_out, "test", model.replace(".pkl", "")))
         else:
+            c.verbose = 0
+            f.verbose = 0
             assert os.path.isfile("parsed_test.pkl"), "You must have parsed test data to segment"
             p = unpickle("parsed_test.pkl")
             c = Classifier(param_dir=default_model_out, testing=True, grammar=p.grammar_inv,
                            verbose=verbose, outdir=default_lg_out, model=model)
             seg = Segmenter(grammar=p.grammar_inv)
             seg.segment_inkml_files(p.parsed_inkml, f, c)
-            seg.backtrack_and_print(os.path.join(default_lg_out, "test", model.remove(".pkl")))
+            seg.backtrack_and_print(os.path.join(default_lg_out, "test", model.replace(".pkl", "")))
 
 
 if __name__ == '__main__':

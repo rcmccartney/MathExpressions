@@ -215,9 +215,8 @@ class FeatureExtraction():
         image_mod = np.multiply(indices, image_mat)
         return np.amax(image_mod, axis=0)
         
-    def image_pca(self, images, trainPCA = True, components=10): #trainPCA means generate new components from input set
-        print("val: ", trainPCA)
-        if( trainPCA ):
+    def image_pca(self, images, trainPCA=True, components=10):  # trainPCA means generate new components from input set
+        if (trainPCA):
             self.trainedPCAmodel = PCA(n_components=components)
             return self.trainedPCAmodel.fit_transform(images)
         else:

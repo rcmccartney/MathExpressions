@@ -11,7 +11,6 @@ __pycache__/
 
 # too large, 2 GB of data
 images/
-output/
 models/
 
 # don't include pickled data

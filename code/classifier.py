@@ -120,6 +120,7 @@ class Classifier():
             with open(file, 'rb') as handle:
                 clf = pickle.load(handle)
         else:
-             clf = joblib.load(file)
+            clf = joblib.load(file)
+            clf.verbose = 0
         name = model[:-4]  # gets rid of .pkl
         self.classifiers = [("Loaded model " + name, name+"_unpickled", clf)]
