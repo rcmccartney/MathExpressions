@@ -33,7 +33,7 @@ def parse_cl(args):
     This is the pipeline of the system
     """
 
-    if len(args) < 3:
+    if len(args) < 2:
         print_usage()
 
     # set the defaults
