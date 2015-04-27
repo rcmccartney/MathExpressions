@@ -30,17 +30,13 @@ Flags to use:
 
 EXAMPLE USAGES:
 
-<<<<<<< HEAD
 To train the classifier model on all of some pre-parsed data (from an earlier execution with -p):
 $ python3 execute.py -e -s 1.0 -tc -v 2
 
-Then to run segmentation with this trained classifier:
-=======
 To train the classifier model with a 0.7/0.3 split of data (on files listed in <fileList>):
 $ python3 execute.py -p -e -s 0.7 -tc -v 1 -l <fileList>
 
 Then to run segmentation with this trained classifier on pre-segmented data:
->>>>>>> origin/master
 $ python3 execute.py -seg
 
 To run a trained model on unseen data for testing segmentation results from a directory*:
