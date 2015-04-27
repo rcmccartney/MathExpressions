@@ -5,14 +5,13 @@ from execute import *
 
 class Segmenter():
 
-        def __init__(self, outdir=None, grammar=None):
+        def __init__(self, grammar=None):
 
             self.best_list = []
             self.backtrack_list = []
             self.bestclass_list = []
             self.trace_ids_list = []
             self.test_data = None
-            self.outdir = outdir
             self.grammar = grammar
 
         def segment_inkml_files(self, test_data, feature_extractor, classifier):
@@ -23,6 +22,7 @@ class Segmenter():
             bestclass_list = []
             trace_ids_list = []
             for inkmlfile in test_data:
+                print("Segmenting", inkmlfile.fname)
                 trace_list = inkmlfile.get_trace_list()
                 best = []
                 backtrack = []
@@ -61,13 +61,6 @@ class Segmenter():
                         best[i] = maxdist
                         backtrack[i] = -1
                         bestclass[i] = maxkey
-                #print(best)
-                #print(backtrack)
-                #print(bestclass)
-                #print("")
-                #print("")
-                #print("")
-                
                 best_list.append(best)
                 backtrack_list.append(backtrack)
                 bestclass_list.append(bestclass)
@@ -83,7 +76,7 @@ class Segmenter():
             self.bestclass_list = bestclass_list
             self.trace_ids_list = trace_ids_list
 
-        def backtrack_and_print(self):
+        def backtrack_and_print(self, outdir):
             assert self.test_data is not None, "Need to segment inkml files before performing backtracking"
             for i in range(len(self.test_data)):
                 inkml = self.test_data[i]
@@ -101,5 +94,5 @@ class Segmenter():
                     symbol_list = [(classes[curr], curr_trace)] + symbol_list
                     curr = prev
                 # now symbol_list has been built so print it
-                inkml.print_it(self.outdir, self.grammar, symbol_list)
+                inkml.print_it(outdir, self.grammar, symbol_list)
 

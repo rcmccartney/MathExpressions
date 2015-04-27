@@ -29,4 +29,5 @@ $ python3 parseAndExecute.py -m rbf_svm.pkl -l <FILE> -v 1
 HOW IT WAS TRAINED
 -p -e -s 0.7 -tc -v 1 -l C:\Users\mccar_000\Dropbox\McCartney\GradSchool\Classes\Semester4\PatternRec\Project\TrainINKML_v3\AllEM_part4_TRAIN_all.txt
 
+-seg -v 1
 

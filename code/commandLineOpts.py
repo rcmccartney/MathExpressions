@@ -52,6 +52,9 @@ def parse_cl(args):
     grammar_file = "listSymbolsPart4-revised.txt"
 
     print("Running", args[0])
+    # ask for help
+    if "-h" in args:
+        print_usage()
     # parsing setting
     if "-p" in args:
         args.remove("-p")
@@ -129,21 +132,18 @@ def parse_cl(args):
             args.remove(grammar_file)
         args.remove("-g")
     print("grammar file loaded from", grammar_file)
-    # now get the files to use
-    if args[1] == "-f":  # operate on files
+    # now get the files to use if they are using files
+    if len(args) > 1 and args[1] == "-f":  # operate on files
         filelist = args[2:]
-    elif args[1] == "-d":  # operate on directories
+    elif len(args) > 1 and args[1] == "-d":  # operate on directories
         for arg in args[2:]:
             for filename in os.listdir(arg):
                 filelist.append(os.path.join(arg, filename))
-    elif args[1] == "-l":  # operate on a filelist
+    elif len(args) > 1 and args[1] == "-l":  # operate on a filelist
         path = os.path.dirname(os.path.realpath(args[2]))
         with open(args[2], 'r') as f:
             for line in f:
                 filelist.append(os.path.join(path, os.path.normcase(line.strip())))
-    else:
-        print("Usage error:")
-        print_usage()
 
     return (parsing, splitting, extraction, training, testing,
             train_percent, segment, model, filelist, default_model_out,

@@ -38,8 +38,7 @@ class Classifier():
         #self.train_classifier("1-nn", "1nn", KnnClassifier(k=1))
         #self.train_classifier("AdaBoost", "bdt",  AdaBoostClassifier(DecisionTreeClassifier(max_depth=8),
          #                        algorithm="SAMME", n_estimators=200))
-        self.train_classifier("Random Forest", "rf", RandomForestClassifier(n_estimators=500, max_depth=18,
-                                                                            n_jobs=-1, verbose=1))
+        self.train_classifier("Random Forest", "rf", RandomForestClassifier(n_estimators=500, max_depth=18, n_jobs=-1))
         #self.train_classifier("SVM w/ RBF kernel", "rbf_svm", svm.SVC(kernel='rbf'))
 
     def make_lg(self, output, inkml, dirname):
@@ -72,7 +71,6 @@ class Classifier():
         # the model is stored in a tuple along with its name
         model_temp = self.classifiers[0][2]
         outprob = model_temp.predict_proba(feature_set)
-        print("model output prob: ", outprob)
         max_prob = -1
         max_class = ""
         model_class_list = model_temp.classes_

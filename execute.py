@@ -132,17 +132,23 @@ def main():
             assert os.path.isfile("split.pkl"), "You must have a test split before segmentation"
             p = unpickle("parsed_train.pkl")
             s = unpickle("split.pkl")
-            assert s.split_percent < 1.0, "The test split must be greater than zero to proceed"
-            inkml = s.test
+            c = Classifier(param_dir=default_model_out, testing=True, grammar=p.grammar_inv,
+                           verbose=verbose, outdir=default_lg_out, model=model)
+            seg = Segmenter(grammar=p.grammar_inv)
+            print("\n## Segmenting the training data ##")
+            seg.segment_inkml_files(s.train, f, c)
+            seg.backtrack_and_print(os.path.join(default_lg_out, "train", model.remove(".pkl")))
+            if s.split_percent < 1:
+                seg.segment_inkml_files(s.test, f, c)
+                seg.backtrack_and_print(os.path.join(default_lg_out, "test", model.remove(".pkl")))
         else:
             assert os.path.isfile("parsed_test.pkl"), "You must have parsed test data to segment"
             p = unpickle("parsed_test.pkl")
-            inkml = p.parsed_inkml
-        c = Classifier(param_dir=default_model_out, testing=True, grammar=p.grammar_inv,
-                       verbose=verbose, outdir=default_lg_out, model=model)
-        seg = Segmenter(outdir=default_lg_out, grammar=p.grammar_inv)
-        seg.segment_inkml_files(inkml, f, c)
-        seg.backtrack_and_print()
+            c = Classifier(param_dir=default_model_out, testing=True, grammar=p.grammar_inv,
+                           verbose=verbose, outdir=default_lg_out, model=model)
+            seg = Segmenter(grammar=p.grammar_inv)
+            seg.segment_inkml_files(p.parsed_inkml, f, c)
+            seg.backtrack_and_print(os.path.join(default_lg_out, "test", model.remove(".pkl")))
 
 
 if __name__ == '__main__':
