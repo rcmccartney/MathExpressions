@@ -71,9 +71,6 @@ class Classifier():
 
     '''This limits evaluated sets to be length 5 or fewer, for the interests of executtion time'''
     def eval(self, feature_set, num_traces):
-        if len(feature_set) > 5:
-            return 0, 0
-    
         # the model is stored in a tuple along with its name
         model_temp = self.classifiers[0][2]
         outprob = model_temp.predict_proba(feature_set)
