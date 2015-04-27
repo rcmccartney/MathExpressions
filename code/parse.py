@@ -108,8 +108,7 @@ class InkmlFile():
                     for trace in symbol_list[i][1]:
                         strokes += str(trace) + ", "
                     strokes = strokes[:-2]  # cut off the last comma
-                    f.write("O, " + label + ", " + grammar_inv[class_decision] +
-                            ", 1.0, " + strokes + "\n")
+                    f.write("O, " + label + ", " + class_decision + ", 1.0, " + strokes + "\n")
                 if self.relations is not None:
                     f.write("\n" + self.relations)
 
