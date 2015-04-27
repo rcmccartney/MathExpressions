@@ -145,12 +145,12 @@ def main():
                 seg.segment_inkml_files(s.test, f, c)
                 seg.backtrack_and_print(os.path.join(default_lg_out, "test", model.replace(".pkl", "")))
         else:
-            c.verbose = 0
-            f.verbose = 0
             assert os.path.isfile("parsed_test.pkl"), "You must have parsed test data to segment"
             p = unpickle("parsed_test.pkl")
             c = Classifier(param_dir=default_model_out, testing=True, grammar=p.grammar_inv,
                            verbose=verbose, outdir=default_lg_out, model=model)
+            c.verbose = 0
+            f.verbose = 0
             seg = Segmenter(grammar=p.grammar_inv)
             seg.segment_inkml_files(p.parsed_inkml, f, c)
             seg.backtrack_and_print(os.path.join(default_lg_out, "test", model.replace(".pkl", "")))
