@@ -7,13 +7,15 @@ def print_usage():
     print("$ python3 execute.py [flag] [arguments]")
     print("flags:")
     print("  -p                  : perform parsing and save to file")
-    print("  -s <percent>        : perform splitting on <percent>% of data (bt 0 and 1) and save to file")
-    print("  -e                  : perform feature extraction and save to dir")
-    print("  -tc                 : train classifier")
-    print("  -seg                : perform segmentation & testing")
+    print("  -s <percent>        : perform splitting on <percent>% of data in (% in range [0,1]) and save to file")
+    print("  -e                  : perform feature extraction and save to file")
+    print("  -tc                 : train the classifier with the data passed in, set segment to 1.0 to use all data")
+    print("  -test               : perform a complete test with unseen data")
+    print("      Options: -seg flag set will test segmentation, otherwise will test only classification")
+    print("  -seg                : perform segmentation (will use either training or testing data)")
     print("  -m  [name]          : specify model to use (inside models dir)")
     print("      Options: '1nn.pkl' - 1-nearest neighbor")
-    print("               'rf.pkl' - random forest")
+    print("               'rf.pkl' - random forest (default)")
     print("               'bdt.pkl' - AdaBoost with decision tree weak learners")
     print("               'rbf_svm.pkl' - SVM with RBF kernel")
     print("  -d [dir1 dir2...]   : operate on the specified directories")
@@ -37,7 +39,8 @@ def parse_cl(args):
     # set the defaults
     parsing = False
     extraction = False
-    testing = True
+    training = False
+    testing = False
     train_percent = 0.7
     segment = False
     splitting = False
@@ -71,13 +74,21 @@ def parse_cl(args):
     # training setting
     if "-tc" in args:
         args.remove("-tc")
-        testing = False
+        training = True
         print("-tc : training the classifier")
     # segmentation setting
     if "-seg" in args:
         args.remove("-seg")
         segment = True
         print("-seg : performing segmentation")
+    # testing setting
+    if "-test" in args:
+        args.remove("-test")
+        testing = True
+        if segment:
+            print("-test, seg : testing the segmentation")
+        else:
+            print("-test, !seg : testing the classifier only")
     # model setting
     if "-m" in args:
         index = args.index("-m")
@@ -134,6 +145,6 @@ def parse_cl(args):
         print("Usage error:")
         print_usage()
 
-    return (parsing, splitting, extraction, testing, train_percent,
-            segment, model, filelist, default_model_out,
+    return (parsing, splitting, extraction, training, testing,
+            train_percent, segment, model, filelist, default_model_out,
             default_lg_out, verbose, grammar_file)
