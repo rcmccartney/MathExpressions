@@ -1,4 +1,5 @@
 import sys
+import random
 from code.commandLineOpts import parse_cl
 from code.split import *
 from code.features import *
@@ -139,10 +140,10 @@ def main():
             # USING A SUBSET DUE TO TIME CONSTRAINTS
             c.verbose = 0
             f.verbose = 0
-            seg.segment_inkml_files(s.train, f, c)
+            seg.segment_inkml_files(random.sample(s.train, 20), f, c)
             seg.backtrack_and_print(os.path.join(default_lg_out, "train", model.replace(".pkl", "")))
             if s.split_percent < 1:
-                seg.segment_inkml_files(s.test, f, c)
+                seg.segment_inkml_files(random.sample(s.test, 20), f, c)
                 seg.backtrack_and_print(os.path.join(default_lg_out, "test", model.replace(".pkl", "")))
         else:
             assert os.path.isfile("parsed_test.pkl"), "You must have parsed test data to segment"

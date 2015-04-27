@@ -38,7 +38,7 @@ class Classifier():
         #self.train_classifier("1-nn", "1nn", KnnClassifier(k=1))
         #self.train_classifier("AdaBoost", "bdt",  AdaBoostClassifier(DecisionTreeClassifier(max_depth=8),
          #                        algorithm="SAMME", n_estimators=200))
-        self.train_classifier("Random Forest", "rf", RandomForestClassifier(n_estimators=500, max_depth=18, n_jobs=-1))
+        self.train_classifier("Random Forest", "rf", RandomForestClassifier(n_estimators=50, max_depth=18, n_jobs=-1))
         #self.train_classifier("SVM w/ RBF kernel", "rbf_svm", svm.SVC(kernel='rbf'))
 
     def make_lg(self, output, inkml, dirname):
@@ -60,14 +60,20 @@ class Classifier():
             with open(filename, 'wb') as f:
                 pickle.dump(model, f, pickle.HIGHEST_PROTOCOL)
         else:
-            joblib.dump(model, filename)
+            with open(filename, 'wb') as f:
+                pickle.dump(model, f)
+            #joblib.dump(model, filename)
         out = model.predict(self.train_data)
         self.make_lg(out, self.inkml, os.path.join(self.outdir, "train", shorthand))
         self.classifiers.append((name, shorthand, model))
         if self.verbose == 1:
             self.print_confusion(self.train_target, out)
 
+    '''This limits evaluated sets to be length 5 or fewer, for the interests of executtion time'''
     def eval(self, feature_set, num_traces):
+        if len(feature_set) > 5:
+            return 0, 0
+    
         # the model is stored in a tuple along with its name
         model_temp = self.classifiers[0][2]
         outprob = model_temp.predict_proba(feature_set)
