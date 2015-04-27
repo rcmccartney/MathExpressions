@@ -1,9 +1,8 @@
 Extracting the program:
 1. Unzip program.zip
-2.
+2. tar -xvzf program.tgz
 
 Running the program:
-    
 $ python3 execute.py [flag] [arguments]
 
 Flags to use:
@@ -27,19 +26,21 @@ Flags to use:
 -om [dir]           : specify the models directory
 -v [int]            : turn on verbose output [1=minimal, 2=maximal]
 -g [file]           : specify grammar file location
--skip               : flag to skip the parsing step and load from parsed.pkl
 
-EXAMPLES:
 
-To train the classifier model with a 0.7 / 0.3 split of data (with files listed files.txt):
-$ python3 execute.py -p -e -s 0.7 -tc -v 1 -l files.txt
+EXAMPLE USAGES:
 
-Then to run segmentation with this trained classifier:
+To train the classifier model with a 0.7/0.3 split of data (on files listed in <fileList>):
+$ python3 execute.py -p -e -s 0.7 -tc -v 1 -l <fileList>
+
+Then to run segmentation with this trained classifier on pre-segmented data:
 $ python3 execute.py -seg
 
-To run a trained model on unseen data for testing segmentation results* from a directory:
+To run a trained model on unseen data for testing segmentation results from a directory*:
 $ python3 execute.py -test -p -seg -d <dir>
 
-*Note the pipeline can also be broken into separate steps of parsing then segmentation.
-A trained classifier and trained feature extractor are required to test.
+*Note the pipeline can also be broken into separate steps 
+of parsing then segmentation with two separate execution calls.
+A trained classifier and trained feature extractor are required 
+to perform testing or you will receive an assertion error.
 
