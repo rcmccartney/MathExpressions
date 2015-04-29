@@ -9,6 +9,8 @@ from sklearn.ensemble import RandomForestClassifier
 from code.classifierImplementations import *
 from sklearn import svm
 from sklearn.externals import joblib
+from code.randForest.forest import Forest
+from code.randForest.AtrocityEntropyFn import *
 
 class Classifier():
     """ This class is a wrapper around whatever classifiers are implemented for the inkml classification """
@@ -40,7 +42,8 @@ class Classifier():
                                                      algorithm="SAMME", n_estimators=200))
         elif self.model == "rf":
             self.train_classifier("Random Forest", "rf",
-                                  RandomForestClassifier(n_estimators=50, max_depth=18, n_jobs=-1))
+                                  Forest(depthlimit=18, weak_learner=AtrocityEntropyFn(), bagging=True,
+                                         numclasses=len(self.grammar)))
         else:  # svm
             self.train_classifier("SVM w/ RBF kernel", "rbf_svm", svm.SVC(kernel='rbf'))
 
