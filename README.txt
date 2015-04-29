@@ -24,17 +24,19 @@ Flags to use:
 -l [filelist.txt]   : operate on the files listed in the specified text file
 -ol [outdir]        : specify the output directory for .lg files
 -om [dir]           : specify the models directory
--v [int]            : turn on verbose output [1=minimal, 2=maximal]
 -g [file]           : specify grammar file location
 
 
 EXAMPLE USAGES:
 
 To train the classifier model on all of some pre-parsed data (from an earlier execution with -p):
-$ python3 execute.py -e -s 1.0 -tc -v 2
+$ python3 execute.py -e -s 1.0 -tc
 
 To train the classifier model with a 0.7/0.3 split of data (on files listed in <fileList>):
-$ python3 execute.py -p -e -s 0.7 -tc -v 1 -l <fileList>
+$ python3 execute.py -p -e -s 0.7 -tc -l <fileList>
+
+To train the classifier model and segment using <dir>:
+$ python3 execute.py -p -e -s 0.7 -tc -seg -d <dir>
 
 Then to run segmentation with this trained classifier on pre-segmented data:
 $ python3 execute.py -seg
