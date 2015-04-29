@@ -23,7 +23,6 @@ def print_usage():
     print("  -l [filelist.txt]   : operate on the files listed in the specified text file")
     print("  -ol [outdir]        : specify the output directory for .lg files")
     print("  -om [dir]           : specify the models directory")
-    print("  -v [int]            : turn on verbose output [1=minimal, 2=maximal]")
     print("  -g [file]           : specify grammar file location")
     sys.exit(1)
 
@@ -48,7 +47,6 @@ def parse_cl(args):
     filelist = []
     default_model_out = os.path.realpath("models")
     default_lg_out = os.path.realpath("output")
-    verbose = 0
     grammar_file = "listSymbolsPart4-revised.txt"
 
     print("Running", args[0])
@@ -116,14 +114,6 @@ def parse_cl(args):
             args.remove(args[index+1])
         args.remove("-om")
     print("using model directory", default_model_out)
-    # verbose setting
-    if "-v" in args:
-        index = args.index("-v")
-        if index < len(args) - 1 and "-" not in args[index+1]:
-            verbose = int(args[index+1])
-            args.remove(args[index+1])
-        args.remove("-v")
-    print("using verbose output level", verbose)
     # setting grammar file location
     if "-g" in args:
         index = args.index("-g")
@@ -147,4 +137,4 @@ def parse_cl(args):
 
     return (parsing, splitting, extraction, training, testing,
             train_percent, segment, model, filelist, default_model_out,
-            default_lg_out, verbose, grammar_file)
+            default_lg_out, grammar_file)

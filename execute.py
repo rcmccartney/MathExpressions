@@ -1,5 +1,6 @@
 import sys
 import random
+import pickle
 from code.commandLineOpts import parse_cl
 from code.split import *
 from code.features import *
@@ -11,7 +12,7 @@ from code.segmentation import *
 
 def pickle_array(mat, name):
     with open(os.path.relpath(name), 'wb') as handle:
-        pickle.dump(mat, handle, pickle.HIGHEST_PROTOCOL)
+        pickle.dump(mat, handle, pickle.DEFAULT_PROTOCOL)
 
 
 def unpickle(name):
@@ -27,16 +28,17 @@ def main():
     """
     parsing, splitting, extraction, training, testing, \
         train_percent, segment, model, filelist, default_model_out,\
-        default_lg_out, verbose, grammar_file = parse_cl(sys.argv)
+        default_lg_out, grammar_file = parse_cl(sys.argv)
+
+    # get the output classes we will use
+    g = Grammar(grammar_file)
 
     # STEP 1 - PARSING
     if parsing:
-        print("\n## Parsing input data ##")
-        p = Parser(verbose, grammar_file)
-        p.parse(filelist)
+        print("\n# Parsing input data #")
+        p = Parser()
+        p.parse(filelist, g.grammar)
         print("Parsed", len(p.parsed_inkml), "InkML files")
-        if verbose == 2:
-            p.print_results()
         if not testing:
             pickle_array(p, "parsed_train.pkl")
         else:
@@ -44,115 +46,85 @@ def main():
 
     # STEP 2 - SPLITTING
     if splitting:
-        assert os.path.isfile("parsed_train.pkl"), "You must have parsed the input data before splitting it"
+        print("\n# Splitting input data for training #")
+        assert os.path.isfile("parsed_train.pkl"), "You must have parsed training data before you can split"
         p = unpickle("parsed_train.pkl")
-        print("\n## Splitting input data for training ##")
-        s = Split(p.parsed_inkml, p.grammar, verbose, train_percent)
+        s = Split(p.parsed_inkml, g.grammar, train_percent)
         if train_percent < 1:
             s.optimize_kl()
-        if verbose == 2:
-            for inkmlFile in s.train:
-                for symbol in inkmlFile.symbol_list:
-                    print(inkmlFile.fname, symbol.label)
         pickle_array(s, "split.pkl")
 
     # STEP 3 - EXTRACTION
     if extraction and not testing:
+        print("\n# Running feature extraction for training data #")
         assert os.path.isfile("split.pkl"), "You must have split the input data before feature extraction"
         s = unpickle("split.pkl")
-        print("\n## Running feature extraction for training ##")
-        f = FeatureExtraction(verbose)
-        xgrid_train, ytclass_train, inkmat_train = f.get_feature_set(s.train, True, verbose)
-        pickle_array(xgrid_train, "x_train.pkl")
-        pickle_array(ytclass_train, "y_train.pkl")
-        pickle_array(inkmat_train, "inkmat_train.pkl")
+        f = FeatureExtraction()
+        pickle_array(f.get_feature_set(s.train, True), "train_feat.pkl")
         if s.split_percent < 1:
-            xgrid_test, ytclass_test, inkmat_test = f.get_feature_set(s.test, False, verbose)
-            pickle_array(xgrid_test, "x_test.pkl")
-            pickle_array(ytclass_test, "y_test.pkl")
-            pickle_array(inkmat_test, "inkmat_test.pkl")
+            pickle_array(f.get_feature_set(s.test, False), "test_feat.pkl")
         pickle_array(f, "features.pkl")
-    elif extraction and not segment:  # For testing the classifier only w/o segmentation
+    elif extraction and not segment:  # For testing the classifier w/o segmentation - segmentation given to you
+        print("\n# Running feature extraction for testing the classifier #")
         assert os.path.isfile("parsed_test.pkl"), "You must have parsed test data before testing the classifier"
         assert os.path.isfile("features.pkl"), "You must have a trained feature extractor before testing"
         p = unpickle("parsed_test.pkl")
         f = unpickle("features.pkl")
-        print("\n## Running feature extraction for testing ##")
-        xgrid_test, ytclass_test, inkmat_test = f.get_feature_set(p.parsed_inkml, False, verbose)
-        pickle_array(xgrid_test, "x_test.pkl")
-        pickle_array(ytclass_test, "y_test.pkl")
-        pickle_array(inkmat_test, "inkmat_test.pkl")
+        pickle_array(f.get_feature_set(p.parsed_inkml, False), "test_feat.pkl")
 
     # STEP 3 - TRAINING CLASSIFIER
     if training:
-        assert os.path.isfile("parsed_train.pkl"), "You must have parsed training data before training the classifier"
+        print("\n# Training the classifier #")
         assert os.path.isfile("split.pkl"), "You must have split the training data before training the classifier"
-        assert os.path.isfile("x_train.pkl") and os.path.isfile("y_train.pkl") and os.path.isfile("inkmat_train.pkl"), \
+        assert os.path.isfile("train_feat.pkl"), \
             "You must have performed feature extraction before training the classifier"
-        p = unpickle("parsed_train.pkl")
         s = unpickle("split.pkl")
-        xgrid_train = unpickle("x_train.pkl")
-        ytclass_train = unpickle("y_train.pkl")
-        inkmat_train = unpickle("inkmat_train.pkl")
-        print("\n## Training the classifier ##")
-        c = Classifier(param_dir=default_model_out, train_data=xgrid_train, train_targ=ytclass_train,
-                       inkml=inkmat_train, grammar=p.grammar_inv, verbose=verbose, outdir=default_lg_out)
+        xgrid_train, ytclass_train, inkmat_train = unpickle("train_feat.pkl")
+        c = Classifier(param_dir=default_model_out, train_data=xgrid_train, train_targ=ytclass_train, model=model,
+                       inkml=inkmat_train, grammar=g.grammar_inv, outdir=default_lg_out)
         # Can test the classifer on the held out data
         if not segment and s.split_percent < 1:
-            assert os.path.isfile("x_test.pkl") and os.path.isfile("y_test.pkl") and os.path.isfile("inkmat_test.pkl"),\
+            assert os.path.isfile("test_feat.pkl"), \
                 "You must have performed feature extraction on held out data before testing the classifier"
-            xgrid_test = unpickle("x_test.pkl")
-            ytclass_test = unpickle("y_test.pkl")
-            inkmat_test = unpickle("inkmat_test.pkl")
+            xgrid_test, ytclass_test, inkmat_test = unpickle("test_feat.pkl")
             c.test_classifiers(xgrid_test, test_targ=ytclass_test, inkml=inkmat_test)
 
     # This is just for testing the classifier, no segmentation required
     if testing and not segment:
-        assert os.path.isfile("parsed_test.pkl"), "You must have parsed test data before testing the classifier"
-        assert os.path.isfile("x_test.pkl") and os.path.isfile("y_test.pkl") and os.path.isfile("inkmat_test.pkl"),\
+        print("\n# Testing the classifier only #")
+        assert os.path.isfile("test_feat.pkl"), \
             "You must have performed feature extraction on held out data before testing the classifier"
-        xgrid_test = unpickle("x_test.pkl")
-        ytclass_test = unpickle("y_test.pkl")
-        inkmat_test = unpickle("inkmat_test.pkl")
-        p = unpickle("parsed_test.pkl")
-        c = Classifier(param_dir=default_model_out, testing=True, grammar=p.grammar_inv,
-                       verbose=verbose, outdir=default_lg_out, model=model)
+        xgrid_test, ytclass_test, inkmat_test = unpickle("test_feat.pkl")
+        c = Classifier(param_dir=default_model_out, testing=True, grammar=g.grammar_inv,
+                       outdir=default_lg_out, model=model)
         c.test_classifiers(xgrid_test, test_targ=ytclass_test, inkml=inkmat_test)
 
     # STEP 4 - SEGMENTATION
-    # Using dynamic programming for segmentation,
-    # input inkml list, feature extractor, and classifier objects
     if segment:
-        # TODO : remove the grammar from the parser so it doesn't need to be unparsed
         assert os.path.isfile("features.pkl"), "You must have a trained feature extractor before segmentation"
         f = unpickle("features.pkl")
         # two cases - if this is training, use the split test data
         # otherwise, use parsed test data
         if not testing:
-            assert os.path.isfile("parsed_train.pkl"), "You must have a trained parser before segmentation"
-            assert os.path.isfile("split.pkl"), "You must have a test split before segmentation"
-            p = unpickle("parsed_train.pkl")
+            print("\n# Segmenting on training data #")
+            assert os.path.isfile("split.pkl"), "You must have a splitter for training and testing of segmentation"
             s = unpickle("split.pkl")
-            c = Classifier(param_dir=default_model_out, testing=True, grammar=p.grammar_inv,
-                           verbose=verbose, outdir=default_lg_out, model=model)
-            seg = Segmenter(grammar=p.grammar_inv)
-            print("\n## Segmenting the training data ##")
-            # USING A SUBSET DUE TO TIME CONSTRAINTS
-            c.verbose = 0
-            f.verbose = 0
+            c = Classifier(param_dir=default_model_out, testing=True, grammar=g.grammar_inv,
+                           outdir=default_lg_out, model=model)
+            seg = Segmenter(grammar=g.grammar_inv)
+            # USING A RANDOM SAMPLE TO TRAIN / TEST SEGMENTER
             seg.segment_inkml_files(random.sample(s.train, 20), f, c)
             seg.backtrack_and_print(os.path.join(default_lg_out, "train", model.replace(".pkl", "")))
             if s.split_percent < 1:
                 seg.segment_inkml_files(random.sample(s.test, 20), f, c)
                 seg.backtrack_and_print(os.path.join(default_lg_out, "test", model.replace(".pkl", "")))
         else:
-            assert os.path.isfile("parsed_test.pkl"), "You must have parsed test data to segment"
+            print("\n# Segmenting on test data #")
+            assert os.path.isfile("parsed_test.pkl"), "You must have parsed testing data to segment"
             p = unpickle("parsed_test.pkl")
-            c = Classifier(param_dir=default_model_out, testing=True, grammar=p.grammar_inv,
-                           verbose=verbose, outdir=default_lg_out, model=model)
-            c.verbose = 0
-            f.verbose = 0
-            seg = Segmenter(grammar=p.grammar_inv)
+            c = Classifier(param_dir=default_model_out, testing=True, grammar=g.grammar_inv,
+                           outdir=default_lg_out, model=model)
+            seg = Segmenter(grammar=g.grammar_inv)
             seg.segment_inkml_files(p.parsed_inkml, f, c)
             seg.backtrack_and_print(os.path.join(default_lg_out, "test", model.replace(".pkl", "")))
 

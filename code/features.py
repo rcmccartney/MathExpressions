@@ -14,10 +14,8 @@ class FeatureExtraction():
     Takes in a train and test set of Inkml and produces
     a 2D array of features and a 1D array of output classes
     """
-
-    def __init__(self, verbose):
-        self.verbose = verbose
-        self.trainedPCAmodel = None
+    def __init__(self):
+        self.trained_pca_model = None
 
     @staticmethod
     def rescale_and_resample(trace_list, bound_square_len=1, alpha=0.01):
@@ -27,10 +25,14 @@ class FeatureExtraction():
         xmin = ymin = float("inf")
         xmax = ymax = float("-inf")
         for trace in trace_list:
-            if min(trace.x) < xmin: xmin = min(trace.x)
-            if max(trace.x) > xmax: xmax = max(trace.x)
-            if min(trace.y) < ymin: ymin = min(trace.y)
-            if max(trace.y) > ymax: ymax = max(trace.y)
+            if min(trace.x) < xmin:
+                xmin = min(trace.x)
+            if max(trace.x) > xmax:
+                xmax = max(trace.x)
+            if min(trace.y) < ymin:
+                ymin = min(trace.y)
+            if max(trace.y) > ymax:
+                ymax = max(trace.y)
         xrange = xmax - xmin
         yrange = ymax - ymin
         div_scale = max(xrange, yrange)
@@ -96,15 +98,15 @@ class FeatureExtraction():
 
     @staticmethod
     def get_aspect_ratio(symbol):
-        xMin, xMax, yMin, yMax = float("inf"), float("-inf"), float("inf"), float("-inf")
+        xmin, xmax, ymin, ymax = float("inf"), float("-inf"), float("inf"), float("-inf")
         for trace in symbol.trace_list:
-            xMinTemp, xMaxTemp, yMinTemp, yMaxTemp = trace.get_boundaries()
-            xMin = min(xMin, xMinTemp)
-            xMax = max(xMax, xMaxTemp)
-            yMin = min(yMin, yMinTemp)
-            yMax = max(yMax, yMaxTemp)
-        w = abs(xMax-xMin)
-        h = abs(yMax-yMin)
+            xmin_temp, xmax_temp, ymin_temp, ymax_temp = trace.get_boundaries()
+            xmin = min(xmin, xmin_temp)
+            xmax = max(xmax, xmax_temp)
+            ymin = min(ymin, ymin_temp)
+            ymax = max(ymax, ymax_temp)
+        w = abs(xmax-xmin)
+        h = abs(ymax-ymin)
         if h != 0:
             ratio = w/h
         else:
@@ -117,7 +119,7 @@ class FeatureExtraction():
 
     @staticmethod
     def get_cov_xy(xtrans, ytrans):
-        if (len(xtrans) > 1):
+        if len(xtrans) > 1:
             # this will fail otherwise for single points that don't have a covariance
             x = np.cov(xtrans, ytrans).flatten()
         else:
@@ -140,13 +142,15 @@ class FeatureExtraction():
             lowery = int(math.floor(ylist[index]/h))
             gridx = [lowerx, lowerx+1, lowerx, lowerx+1]
             gridy = [lowery, lowery, lowery+1, lowery+1]
-            for j in range(0,len(gridx)):
-                grid[gridx[j]][gridy[j]] += (w - abs(gridx[j]*w - xlist[index]))/w * (h - abs(gridy[j]*h - ylist[index]))/h
+            for j in range(0, len(gridx)):
+                grid[gridx[j]][gridy[j]] += (w - abs(gridx[j]*w - xlist[index])) / w * \
+                                            (h - abs(gridy[j]*h - ylist[index])) / h
         return grid.flatten()
     
     @staticmethod
-    def get_all_crosses_maxmin(image_mat, numregions=5, verbose=False):
-        def get_rowwise_crosses_maxmin(image_mat, numregions, verbose):
+    def get_all_crosses_maxmin(image_mat, numregions=5):
+
+        def get_rowwise_crosses_maxmin(image_mat, numregions):
             numrows, numcols = image_mat.shape
             if numregions > numrows or numregions > numcols:
                 numregions = 1
@@ -154,21 +158,21 @@ class FeatureExtraction():
             avelist = []
             mincrosslist = []
             maxcrosslist = []
-            for i in range(0,numrows,rowwidth):
-                subrows = image_mat[i:i+rowwidth,:]
+            for i in range(0, numrows, rowwidth):
+                subrows = image_mat[i:i+rowwidth, :]
                 ave = subrows.sum()/float(rowwidth)
                 minindexsum = 0
                 maxindexsum = 0
                 for row in subrows:
                     nonzero_indices = np.where(row != 0)[0]
                     if len(nonzero_indices) == 0:
-                        minInd = 0
-                        maxInd = len(subrows)-1
+                        min_ind = 0
+                        max_ind = len(subrows)-1
                     else:
-                        minInd = np.amin(nonzero_indices)
-                        maxInd = np.amax(nonzero_indices)
-                    minindexsum += minInd
-                    maxindexsum += maxInd
+                        min_ind = np.amin(nonzero_indices)
+                        max_ind = np.amax(nonzero_indices)
+                    minindexsum += min_ind
+                    maxindexsum += max_ind
                 minindexave = float(minindexsum)/float(len(subrows))
                 maxindexave = float(maxindexsum)/float(len(subrows))
                 avelist.append(ave)
@@ -177,8 +181,8 @@ class FeatureExtraction():
             featurelist = avelist + mincrosslist + maxcrosslist
             return featurelist
         
-        rowwise = get_rowwise_crosses_maxmin(image_mat,numregions,verbose)
-        colwise = get_rowwise_crosses_maxmin(image_mat.transpose(),numregions,verbose)
+        rowwise = get_rowwise_crosses_maxmin(image_mat, numregions)
+        colwise = get_rowwise_crosses_maxmin(image_mat.transpose(), numregions)
         totalfeatures = rowwise + colwise
         return np.asarray(totalfeatures)
 
@@ -188,19 +192,19 @@ class FeatureExtraction():
         
     @staticmethod
     def fki_center_grav_col(image_mat):
-        H = image_mat.shape[0]
+        h = image_mat.shape[0]
         indices = np.indices(image_mat.shape)[0]
         image_mod = np.multiply(image_mat, indices)
-        image_mod /= H
+        image_mod /= h
         return np.sum(image_mod, axis=0)
         
     @staticmethod
     def fki_sec_moment_col(image_mat):
-        H2 = (image_mat.shape[0])**2
+        h2 = (image_mat.shape[0])**2
         indices = np.indices(image_mat.shape)[0]
         indices2 = np.multiply(indices, indices)
-        image_mod = np.multiply(image_mat, indices)
-        image_mod /= H2
+        image_mod = np.multiply(image_mat, indices2)
+        image_mod /= h2
         return np.sum(image_mod, axis=0)
         
     @staticmethod
@@ -215,14 +219,20 @@ class FeatureExtraction():
         image_mod = np.multiply(indices, image_mat)
         return np.amax(image_mod, axis=0)
         
-    def image_pca(self, images, trainPCA=True, components=10):  # trainPCA means generate new components from input set
-        if (trainPCA):
-            self.trainedPCAmodel = PCA(n_components=components)
-            return self.trainedPCAmodel.fit_transform(images)
+    def image_pca(self, images, train_pca=True, components=10):
+        """
+        :param images:
+        :param train_pca: boolean to generate the PCA components or use the generated components present
+        :param components:
+        :return:
+        """
+        if train_pca:
+            self.trained_pca_model = PCA(n_components=components)
+            return self.trained_pca_model.fit_transform(images)
         else:
-            return self.trainedPCAmodel.transform(images)
+            return self.trained_pca_model.transform(images)
 
-    def get_feature_set(self, inkml_file_list, trainPCA = True, verbose = 0):
+    def get_feature_set(self, inkml_file_list, train_pca=True):
         symbol_size = 0  # get the size to pre-alocate the array
         for inkml in inkml_file_list:
             symbol_size += len(inkml.symbol_list)
@@ -234,8 +244,7 @@ class FeatureExtraction():
         images = np.zeros((symbol_size, size))
         curr = 0
         for inkml_file in inkml_file_list:
-            if verbose == 1:
-                print("Creating features for", inkml_file.fname)
+            print("Creating features for", inkml_file.fname)
             for symbol in inkml_file.symbol_list:
                 xtrans, ytrans = self.rescale_and_resample(symbol.trace_list)
                 ximage, yimage = self.rescale_and_resample(symbol.trace_list, pixel_axis)
@@ -264,37 +273,29 @@ class FeatureExtraction():
                 curr += 1
         ## OFFLINE FEATURES
         ## append columns
-
-        
-        '''removed pca for now'''
-        all_data = np.append(x_grid, self.image_pca(images, trainPCA), 1)
-        all_data = x_grid
-        if self.verbose == 1:
-            print("Extracted " + str(all_data.shape[1]) + " features on " + str(all_data.shape[0]) + " instances in dataset")
+        all_data = np.append(x_grid, self.image_pca(images, train_pca), 1)
         return all_data, y_true_class, inkml_file_ref
         
-    def get_single_feature_set(self, symbol, verbose):
+    def get_single_feature_set(self, symbol):
+
         symbol_size = 1  # get the size to pre-alocate the array
         x_grid = np.zeros((symbol_size, 174))  # 69 is number of features we have
         pixel_axis = 20
         size = (pixel_axis+1)*(pixel_axis+1)
         images = np.zeros((symbol_size, size))
         curr = 0
-
         xtrans, ytrans = self.rescale_and_resample(symbol.trace_list)
         ximage, yimage = self.rescale_and_resample(symbol.trace_list, pixel_axis)
         #image = self.convert_to_image(symbol.trace_list, pixel_axis=pixel_axis)
         #images = np.append(images, image.flatten().reshape([1, size]), axis=0)
         indices = [np.around(y)*(pixel_axis+1) + np.around(x) for x, y in zip(ximage, yimage)]
         images[curr, indices] = 1
-        ## ONLINE FEATURES ##
         x_grid[curr, 0] = self.get_number_strokes(symbol)
         x_grid[curr, 1:5] = self.get_cov_xy(xtrans, ytrans)
         x_grid[curr, 5] = self.get_mean(xtrans)
         x_grid[curr, 6] = self.get_mean(ytrans)
         x_grid[curr, 7] = self.get_aspect_ratio(symbol)
         x_grid[curr, 8:33] = self.get_fuzzy_histogram_distance(xtrans, ytrans)
-        
         image_curr = np.reshape(images[curr], (pixel_axis+1, pixel_axis+1))
         x_grid[curr, 33:69] = self.get_all_crosses_maxmin(image_curr, 5)
         x_grid[curr, 69:90] = self.fki_num_black_col(image_curr)
@@ -303,12 +304,5 @@ class FeatureExtraction():
         x_grid[curr, 132:153] = self.fki_upcontour_col(image_curr)
         x_grid[curr, 153:174] = self.fki_lowcontour_col(image_curr)
         #x.extend(image.flatten())
-        curr += 1
-        ## OFFLINE FEATURES
-        ## append columns
-
         all_data = np.append(x_grid, self.image_pca(images, False), 1)
-        all_data = x_grid
-        if self.verbose == 1:
-            print("Extracted " + str(all_data.shape[1]) + " features on " + str(all_data.shape[0]) + " instances in dataset")
         return all_data

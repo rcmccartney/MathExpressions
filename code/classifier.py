@@ -13,20 +13,18 @@ from sklearn.externals import joblib
 class Classifier():
     """ This class is a wrapper around whatever classifiers are implemented for the inkml classification """
 
-    def __init__(self, outdir=None, train_data=None, train_targ=None, grammar=None, verbose=None,
+    def __init__(self, outdir=None, train_data=None, train_targ=None, grammar=None,
                  inkml=None, param_dir=None, model="rf", testing=False):
         """
-        :param param_file: the parameters to use if testing, or the location to save for training
-        :param verbose: boolean to print verbose output for debugging
         """
         self.grammar = grammar
         self.inkml = inkml
-        self.verbose = verbose
         self.classifiers = []
         self.outdir = outdir
         self.param_dir = param_dir
+        self.model = model[:-4]
         if testing:
-            self.load_saved_classifier(param_dir, model)
+            self.load_saved_classifier(param_dir, self.model)
         else:
             self.train_data = train_data
             self.train_target = train_targ
@@ -34,12 +32,17 @@ class Classifier():
 
     def train_classifiers(self):
         """ Trains the classifiers being used.  Modify this to introduce other classifiers """
-
-        #self.train_classifier("1-nn", "1nn", KnnClassifier(k=1))
-        #self.train_classifier("AdaBoost", "bdt",  AdaBoostClassifier(DecisionTreeClassifier(max_depth=8),
-         #                        algorithm="SAMME", n_estimators=200))
-        self.train_classifier("Random Forest", "rf", RandomForestClassifier(n_estimators=50, max_depth=18, n_jobs=-1))
-        #self.train_classifier("SVM w/ RBF kernel", "rbf_svm", svm.SVC(kernel='rbf'))
+        if self.model == "1-nn":
+            self.train_classifier("1-nn", "1nn", KnnClassifier(k=1))
+        elif self.model == "bdt":
+            self.train_classifier("AdaBoost", "bdt",
+                                  AdaBoostClassifier(DecisionTreeClassifier(max_depth=8),
+                                                     algorithm="SAMME", n_estimators=200))
+        elif self.model == "rf":
+            self.train_classifier("Random Forest", "rf",
+                                  RandomForestClassifier(n_estimators=50, max_depth=18, n_jobs=-1))
+        else:  # svm
+            self.train_classifier("SVM w/ RBF kernel", "rbf_svm", svm.SVC(kernel='rbf'))
 
     def make_lg(self, output, inkml, dirname):
         # fill in the inkmls with this output decision
@@ -56,18 +59,12 @@ class Classifier():
         if not os.path.exists(self.param_dir):
             os.makedirs(self.param_dir)
         filename = os.path.join(self.param_dir, shorthand + ".pkl")
-        if shorthand == "1nn":
-            with open(filename, 'wb') as f:
-                pickle.dump(model, f, pickle.HIGHEST_PROTOCOL)
-        else:
-            with open(filename, 'wb') as f:
-                pickle.dump(model, f)
-            #joblib.dump(model, filename)
+        with open(filename, 'wb') as f:
+            joblib.dump(model, f, compress=3)
         out = model.predict(self.train_data)
         self.make_lg(out, self.inkml, os.path.join(self.outdir, "train", shorthand))
         self.classifiers.append((name, shorthand, model))
-        if self.verbose == 1:
-            self.print_confusion(self.train_target, out)
+        self.print_confusion(self.train_target, out)
 
     '''This limits evaluated sets to be length 5 or fewer, for the interests of executtion time'''
     def eval(self, feature_set, num_traces):
@@ -95,7 +92,7 @@ class Classifier():
             if test_targ is not None:
                 self.print_confusion(test_targ, out)
 
-    def print_confusion(self, target, out):
+    def print_confusion(self, target, out, print_conf=False):
         """
         Makes and prints confusion matrix in nice formatting
         """
@@ -106,7 +103,7 @@ class Classifier():
             conf[target[i]][out[i]] += 1
         conf_mat = np.asarray(conf)
         print("Classification rate: {:.2f}%".format(100*(np.trace(conf_mat) / np.sum(conf_mat))))
-        if self.verbose == 2:
+        if print_conf:
             print("Targ/Out", end=" ")
             for i in range(conf_mat.shape[0]):
                 print("{:4d}".format(i), end=" ")
@@ -119,11 +116,7 @@ class Classifier():
     def load_saved_classifier(self, param_loc, model):
         """ this loads the saved parameters from the last training of the system """
         file = os.path.join(param_loc, model)
-        if model == "1nn.pkl":
-            with open(file, 'rb') as handle:
-                clf = pickle.load(handle)
-        else:
-            clf = joblib.load(file)
-            clf.verbose = 0
+        clf = joblib.load(file)
         name = model[:-4]  # gets rid of .pkl
+        self.model = name
         self.classifiers = [("Loaded model " + name, name+"_unpickled", clf)]

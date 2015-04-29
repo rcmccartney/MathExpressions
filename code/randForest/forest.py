@@ -4,6 +4,7 @@ from randForest.tree import *
 import math
 import random
 import pickle
+import numpy as np
 from multiprocessing.pool import Pool
 
 
@@ -31,26 +32,24 @@ class Forest(object):
         self.bagging = bagging
         self.bag_ratio = bag_ratio
         self.default_tree_count = default_tree_count
-        self.data = []
-        self.minclass = float('NaN')
-        self.maxclass = float('NaN')
-        self.numclasses = float('NaN')
         self.trees = []
         self.error = []
         self.depthlimit = depthlimit
         self.weak_learner = weak_learner
 
-    def set_train_delete(self, instances, classes, numclass):
+    def fit(self, x, y):
         """
-        Used when there is a lot of data and you want to train a forest
-        without saving it all
-        :param instances: data to use, already processed into 2-D list of lists
+        Train the forest without saving the data
+        :param x: data to use, already processed into 2D numpy array
+        :param y: output values, a 1D numpy array of ints
         :param classes: list of the class decision for each row in instances
         :param numclass: number of classes in this dataset
         :return: None
         """
-        self.numclasses = numclass
-        newinstances = []
+        minclass = np.amin(y)
+        maxclass = np.amax(y)
+        l = np.arange(y.shape[0])
+        out = np.zeros(y.shape[0], maxclass-minclass+1)
         for row_id in range(len(instances)):
             # append a class decision vector such as [0, 1, 0, 0] (here is a 4 class problem) to row of data
             classvec = [0 for _ in range(numclass)]
@@ -98,8 +97,6 @@ class Forest(object):
         Gives each thread its own copy of the data
         :return: thread-local copy of the data to make a tree from
         """
-        # too slow
-        #return deepcopy(self.data)
         if self.bagging:
             return [self.data[random.randint(0, len(self.data)-1)] for _ in range(int(self.bag_ratio*len(self.data)))]
         else:
@@ -207,17 +204,11 @@ class Forest(object):
         """
         import matplotlib.pyplot as plt
         plt.figure(0)
-        # plt.pause(1)  # use these when interactive plotting
-        #plt.ioff()  # interactive graphics off
-        #plt.clf()   # clear the plot
-        #plt.hold(True) # overplot on
         plt.plot(self.error[::2], self.error[1::2])
         plt.ylabel('Sum of squared error')
         plt.xlabel('Epochs')
         plt.title("Learning Curve")
         plt.ylim([plt.ylim()[0] - 1, plt.ylim()[1] + 1])
-        #plt.ion()   # interactive graphics on
-        #plt.draw()  # update the plot
         plt.show()
 
     def region_plot(self, attr1=0, attr2=1, granularity=50, testfile=None):
@@ -242,7 +233,6 @@ class Forest(object):
         else:
             data = self.data
             datatype = "Train Data"
-
         # plot all of the data in the forest
         # TODO: this will be too much to plot for large data
         allpoints = {}
@@ -290,7 +280,7 @@ class Forest(object):
         plt.ylim([minval_y-ten_percent_y, maxval_y+ten_percent_y])
         plt.show()
 
-    def print_to_file(self, label):
+    def save(self, label):
         """
         pickle this forest for later use
         :param label: name of file to print to

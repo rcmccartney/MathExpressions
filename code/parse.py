@@ -3,6 +3,7 @@ import xml.etree.ElementTree as ET
 import numpy as np
 import os
 
+
 class Trace():
     """ This class represents a trace of (x,y) coordinates within a single symbol """
 
@@ -113,18 +114,11 @@ class InkmlFile():
                     f.write("\n" + self.relations)
 
 
-class Parser():
-    """ This class reads the grammar file and parses the input files """
+class Grammar():
 
-    def __init__(self, verbose, grammar_file):
-        """
-        Initializes the parser for the Inkml files
-        :param grammar_file: file containing the valid symbols to be classified
-        """
-        self.verbose = verbose
+    def __init__(self, grammar_file):
         self.grammar = {}
         self.grammar_inv = {}
-        self.parsed_inkml = []
         try:
             i = 0
             with open(grammar_file) as f:
@@ -142,11 +136,22 @@ class Parser():
                   " in the current directory or have specified a different symbol list")
             raise
 
-    def parse(self, filelist):
+
+class Parser():
+    """ This class reads the grammar file and parses the input files """
+
+    def __init__(self):
+        """
+        Initializes the parser for the Inkml files
+        """
+        self.parsed_inkml = []
+
+    def parse(self, filelist, grammar):
         """
         Walks the XML tree and parses each XML file
         and saves results into self.parsed_inkml
         :param filelist: the files to parse as a list of Strings
+        :param grammar: the symbols used as output classes
         """
         ns = {'inkml': 'http://www.w3.org/2003/InkML'}
         inkmlfilelist = []
@@ -190,8 +195,8 @@ class Parser():
                     annotation = "COMMA"
                 if annotationXML[0:2] == ",_":
                     annotationXML = "COMMA" + annotationXML[1:]
-                assert annotation in self.grammar, "Error: " + annotation + " is not defined in the grammar"
-                label_index = self.grammar[annotation]
+                assert annotation in grammar, "Error: " + annotation + " is not defined in the grammar"
+                label_index = grammar[annotation]
                 symbollist.append(Symbol(num_in_inkml, annotation, annotationXML, label_index, tracelist))
                 num_in_inkml += 1
             #generate class for equation

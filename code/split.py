@@ -9,14 +9,12 @@ class Split():
     This class splits the data into a training a testing set
     """
     # hyperparameters to control the functionality of the Splitter
-    split_percent = 0.7
     threshold = 0.001
     iterations = 100
 
-    def __init__(self, inkmllist, grammar, verbose, split_percent):
+    def __init__(self, inkmllist, grammar, split_percent):
         self.train = []
         self.test = []
-        self.verbose = verbose
         self.num_classes = len(grammar)
         self.grammar = grammar
         self.split_percent = split_percent
@@ -68,17 +66,16 @@ class Split():
               "and ending value", best_s, "after", iterations, "iterations")
         print("Training set contains", len(self.train), "instances and test set contains",
               len(self.test), "instances")
-        if self.verbose == 1:
-            print("Gram : ", end="")
-            self.print_grammar()
-            print("Train: ", end="")
-            self.print_distr(self.calc_distr(self.train))
-            print("Count: ", end="")
-            self.print_distr(self.calc_distr(self.train), normalized=False)
-            print("Test : ", end="")
-            self.print_distr(self.calc_distr(self.test))
-            print("Count: ", end="")
-            self.print_distr(self.calc_distr(self.test), normalized=False)
+        print("Gram : ", end="")
+        self.print_grammar()
+        print("Train: ", end="")
+        self.print_distr(self.calc_distr(self.train))
+        print("Count: ", end="")
+        self.print_distr(self.calc_distr(self.train), normalized=False)
+        print("Test : ", end="")
+        self.print_distr(self.calc_distr(self.test))
+        print("Count: ", end="")
+        self.print_distr(self.calc_distr(self.test), normalized=False)
 
     def calc_distr(self, inkmllist):
         """ Calculates an unnormalized distribution (counts) over the grammar """
