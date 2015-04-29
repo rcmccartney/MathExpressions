@@ -6,9 +6,11 @@ import pickle
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
-from code.classifierImplementations import *
 from sklearn import svm
 from sklearn.externals import joblib
+from code.classifierImplementations import *
+from code.randForest.forest import *
+from code.randForest.AtrocityEntropyFn import *
 
 class Classifier():
     """ This class is a wrapper around whatever classifiers are implemented for the inkml classification """
@@ -37,9 +39,12 @@ class Classifier():
 
         #self.train_classifier("1-nn", "1nn", KnnClassifier(k=1))
         #self.train_classifier("AdaBoost", "bdt",  AdaBoostClassifier(DecisionTreeClassifier(max_depth=8),
-         #                        algorithm="SAMME", n_estimators=200))
-        self.train_classifier("Random Forest", "rf", RandomForestClassifier(n_estimators=50, max_depth=18, n_jobs=-1))
+        #                        algorithm="SAMME", n_estimators=200))
+        #self.train_classifier("Random Forest", "rf", RandomForestClassifier(n_estimators=50, max_depth=18, n_jobs=-1))
         #self.train_classifier("SVM w/ RBF kernel", "rbf_svm", svm.SVC(kernel='rbf'))
+        self.train_classifier("Random Forest", "rf", Forest(weak_learner=AtrocityEntropyFn(),
+                                                            numclasses=len(self.grammar)))
+
 
     def make_lg(self, output, inkml, dirname):
         # fill in the inkmls with this output decision

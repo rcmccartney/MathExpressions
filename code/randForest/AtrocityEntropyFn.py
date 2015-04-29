@@ -58,6 +58,7 @@ class AtrocityEntropyFn():
         Get the counts of the two classes of the samples
         :return: tot count vector
         """
+        print(samples[0][-1])
         tot = np.zeros(1, len(samples[0][-1]))
         for row in samples:
             tot += row[-1]  # row[-1] is a boolean vector for the two classes

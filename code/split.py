@@ -69,13 +69,15 @@ class Split():
         print("Gram : ", end="")
         self.print_grammar()
         print("Train: ", end="")
-        self.print_distr(self.calc_distr(self.train))
+        d = self.calc_distr(self.train)
+        self.print_distr(d)
         print("Count: ", end="")
-        self.print_distr(self.calc_distr(self.train), normalized=False)
+        self.print_distr(d, normalized=False)
         print("Test : ", end="")
-        self.print_distr(self.calc_distr(self.test))
+        d = self.calc_distr(self.test)
+        self.print_distr(d)
         print("Count: ", end="")
-        self.print_distr(self.calc_distr(self.test), normalized=False)
+        self.print_distr(d, normalized=False)
 
     def calc_distr(self, inkmllist):
         """ Calculates an unnormalized distribution (counts) over the grammar """
@@ -140,6 +142,7 @@ class Split():
         Prints the distribution as either a probability distr (when normalized)
         or as the counts of symbols (when not normalized)
         """
+        count = 0
         if normalized:
             norm = sum(distr)
             formatting = "{:.2f}"
@@ -148,7 +151,12 @@ class Split():
             formatting = "{:4.0f}"
         print("[ ", end="")
         for i in range(len(distr)):
+            count += distr[i]/norm
             if i < len(distr) - 1:
                 print(formatting.format(distr[i]/norm), end=", ")
             else:
                 print(formatting.format(distr[i]/norm), end="]\n")
+        if normalized:
+            print("Sum:", str(count*100) + "%")
+        else:
+            print("Sum:", str(int(count)) + " instances")

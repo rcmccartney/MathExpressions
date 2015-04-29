@@ -58,13 +58,11 @@ class Forest(object):
         x = x.tolist()
         for row in range(len(x)):
             x[row].append(out[row])
-        print(len(x[0]), y.size)
-        print(x[19][-1])
         self.data = x
         self.add_tree(iterations=self.default_tree_count)
         self.data = None
 
-    def add_tree(self, iterations=-1, snapshot=False):
+    def add_tree(self, iterations=-1):
         """
         Multi-core, fully utilizes underlying CPU to create the trees
         of the forest and stores them into the forest's list of trees
