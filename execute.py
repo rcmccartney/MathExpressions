@@ -11,6 +11,8 @@ from code.segmentation import *
 
 
 def pickle_array(mat, adir, name):
+    if not os.path.exists(adir):
+        os.makedirs(adir)
     with open(os.path.join(adir, os.path.relpath(name)), 'wb') as handle:
         pickle.dump(mat, handle, pickle.DEFAULT_PROTOCOL)
 
