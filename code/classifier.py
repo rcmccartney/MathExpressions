@@ -9,24 +9,24 @@ from sklearn.ensemble import RandomForestClassifier
 from code.classifierImplementations import *
 from sklearn import svm
 from sklearn.externals import joblib
-from code.randForest.forest import Forest
-from code.randForest.AtrocityEntropyFn import *
 
 class Classifier():
     """ This class is a wrapper around whatever classifiers are implemented for the inkml classification """
 
-    def __init__(self, outdir=None, train_data=None, train_targ=None, grammar=None,
+    def __init__(self, outdir=None, train_data=None, train_targ=None, grammar=None, verbose=None,
                  inkml=None, param_dir=None, model="rf", testing=False):
         """
+        :param param_file: the parameters to use if testing, or the location to save for training
+        :param verbose: boolean to print verbose output for debugging
         """
         self.grammar = grammar
         self.inkml = inkml
+        self.verbose = verbose
         self.classifiers = []
         self.outdir = outdir
         self.param_dir = param_dir
-        self.model = model[:-4]
         if testing:
-            self.load_saved_classifier(param_dir, self.model)
+            self.load_saved_classifier(param_dir, model)
         else:
             self.train_data = train_data
             self.train_target = train_targ
@@ -34,18 +34,12 @@ class Classifier():
 
     def train_classifiers(self):
         """ Trains the classifiers being used.  Modify this to introduce other classifiers """
-        if self.model == "1-nn":
-            self.train_classifier("1-nn", "1nn", KnnClassifier(k=1))
-        elif self.model == "bdt":
-            self.train_classifier("AdaBoost", "bdt",
-                                  AdaBoostClassifier(DecisionTreeClassifier(max_depth=8),
-                                                     algorithm="SAMME", n_estimators=200))
-        elif self.model == "rf":
-            self.train_classifier("Random Forest", "rf",
-                                  Forest(depthlimit=18, weak_learner=AtrocityEntropyFn(), bagging=True,
-                                         numclasses=len(self.grammar)))
-        else:  # svm
-            self.train_classifier("SVM w/ RBF kernel", "rbf_svm", svm.SVC(kernel='rbf'))
+
+        #self.train_classifier("1-nn", "1nn", KnnClassifier(k=1))
+        #self.train_classifier("AdaBoost", "bdt",  AdaBoostClassifier(DecisionTreeClassifier(max_depth=8),
+         #                        algorithm="SAMME", n_estimators=200))
+        self.train_classifier("Random Forest", "rf", RandomForestClassifier(n_estimators=50, max_depth=18, n_jobs=-1))
+        #self.train_classifier("SVM w/ RBF kernel", "rbf_svm", svm.SVC(kernel='rbf'))
 
     def make_lg(self, output, inkml, dirname):
         # fill in the inkmls with this output decision
@@ -62,27 +56,20 @@ class Classifier():
         if not os.path.exists(self.param_dir):
             os.makedirs(self.param_dir)
         filename = os.path.join(self.param_dir, shorthand + ".pkl")
-        with open(filename, 'wb') as f:
-            joblib.dump(model, f, compress=3)
+        if shorthand == "1nn":
+            with open(filename, 'wb') as f:
+                pickle.dump(model, f, pickle.HIGHEST_PROTOCOL)
+        else:
+            with open(filename, 'wb') as f:
+                pickle.dump(model, f)
+            #joblib.dump(model, filename)
         out = model.predict(self.train_data)
         self.make_lg(out, self.inkml, os.path.join(self.outdir, "train", shorthand))
         self.classifiers.append((name, shorthand, model))
-        self.print_confusion(self.train_target, out)
+        if self.verbose == 1:
+            self.print_confusion(self.train_target, out)
 
     '''This limits evaluated sets to be length 5 or fewer, for the interests of executtion time'''
-    '''def eval(self, feature_set, num_traces):
-        # the model is stored in a tuple along with its name
-        model_temp = self.classifiers[0][2]
-        outprob = model_temp.predict_proba(feature_set)
-        max_prob = -1
-        max_class = ""
-        model_class_list = model_temp.classes_
-        for i in range(len(outprob[0])):  # outprob returns list
-            if outprob[0][i] > max_prob:
-                max_prob = outprob[0][i]
-                max_class = model_class_list[i]
-        return max_class, math.log(max_prob)*num_traces'''
-        
     def eval(self, feature_set, num_traces):
         # the model is stored in a tuple along with its name
         model_temp = self.classifiers[0][2]
@@ -114,7 +101,7 @@ class Classifier():
             if test_targ is not None:
                 self.print_confusion(test_targ, out)
 
-    def print_confusion(self, target, out, print_conf=False):
+    def print_confusion(self, target, out):
         """
         Makes and prints confusion matrix in nice formatting
         """
@@ -125,7 +112,7 @@ class Classifier():
             conf[target[i]][out[i]] += 1
         conf_mat = np.asarray(conf)
         print("Classification rate: {:.2f}%".format(100*(np.trace(conf_mat) / np.sum(conf_mat))))
-        if print_conf:
+        if self.verbose == 2:
             print("Targ/Out", end=" ")
             for i in range(conf_mat.shape[0]):
                 print("{:4d}".format(i), end=" ")
@@ -138,7 +125,11 @@ class Classifier():
     def load_saved_classifier(self, param_loc, model):
         """ this loads the saved parameters from the last training of the system """
         file = os.path.join(param_loc, model)
-        clf = joblib.load(file)
+        if model == "1nn.pkl":
+            with open(file, 'rb') as handle:
+                clf = pickle.load(handle)
+        else:
+            clf = joblib.load(file)
+            clf.verbose = 0
         name = model[:-4]  # gets rid of .pkl
-        self.model = name
         self.classifiers = [("Loaded model " + name, name+"_unpickled", clf)]

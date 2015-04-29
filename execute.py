@@ -120,10 +120,12 @@ def main():
                            outdir=default_lg_out, model=model)
             seg = Segmenter(grammar=g.grammar_inv)
             # USING A RANDOM SAMPLE TO TRAIN / TEST SEGMENTER
-            seg.segment_inkml_files(random.sample(s.train, 20), f, c)
+            seg.segment_inkml_files(random.sample(s.train, 200), f, c)
+            '''seg.segment_inkml_files(s.train, f, c)'''
             seg.backtrack_and_print(os.path.join(default_lg_out, "train", model.replace(".pkl", "")))
             if s.split_percent < 1:
-                seg.segment_inkml_files(random.sample(s.test, 20), f, c)
+                seg.segment_inkml_files(random.sample(s.test, 200), f, c)
+                '''seg.segment_inkml_files(s.test, f, c)'''
                 seg.backtrack_and_print(os.path.join(default_lg_out, "test", model.replace(".pkl", "")))
         else:
             print("\n# Segmenting on test data #")
