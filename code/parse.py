@@ -188,7 +188,7 @@ class Parser():
                 # find what index this symbol corresponds to
                 if annotation == ",":
                     annotation = "COMMA"
-                if annotationXML == ",_":
+                if annotationXML[0:2] == ",_":
                     annotationXML = "COMMA" + annotationXML[1:]
                 assert annotation in self.grammar, "Error: " + annotation + " is not defined in the grammar"
                 label_index = self.grammar[annotation]
