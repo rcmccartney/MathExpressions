@@ -11,7 +11,7 @@ class Segmenter():
             self.backtrack_list = []
             self.bestclass_list = []
             self.trace_ids_list = []
-            self.test_data = None
+            self.test_data = []
             self.grammar = grammar
 
         def segment_inkml_files(self, test_data, feature_extractor, classifier):
@@ -29,7 +29,7 @@ class Segmenter():
                 bestclass = []
                 # input to eval is a list of traces - need to get feature set for this
                 temp_symbol = Symbol(None, None, None, None, [trace_list[0]])
-                feature_set = feature_extractor.get_single_feature_set(temp_symbol,0)
+                feature_set = feature_extractor.get_single_feature_set(temp_symbol, 0)
                 maxkey, maxdist = classifier.eval(feature_set, 1)
                 #print("maxkey", maxkey)
                 #print("maxdist", maxdist)
@@ -46,7 +46,7 @@ class Segmenter():
                         #print("subset: ", j+1, ", ", i+1)
                         if len(subset) < 4:
                             temp_symbol = Symbol(None, None, None, None, subset)
-                            feature_set = feature_extractor.get_single_feature_set(temp_symbol,0)
+                            feature_set = feature_extractor.get_single_feature_set(temp_symbol, 0)
                             maxkey, maxdist = classifier.eval(feature_set, len(subset))
                             #print("maxkey: ", maxkey, "maxdist: ", maxdist)
                             dist = best[j] + maxdist
@@ -58,7 +58,7 @@ class Segmenter():
                     full_subset = trace_list[0:i+1]
                     if len(full_subset) < 4:
                         temp_symbol = Symbol(None, None, None, None, full_subset)
-                        feature_set = feature_extractor.get_single_feature_set(temp_symbol,0)
+                        feature_set = feature_extractor.get_single_feature_set(temp_symbol, 0)
                         maxkey, maxdist = classifier.eval(feature_set, (i+1))
                         if maxdist > best[i]:
                             best[i] = maxdist
@@ -92,10 +92,9 @@ class Segmenter():
                 while curr >= 0:
                     curr_trace = []
                     prev = parents[curr]
-                    for i in range(curr, prev, -1):
-                        curr_trace = [traces[i]] + curr_trace
+                    for j in range(curr, prev, -1):
+                        curr_trace = [traces[j]] + curr_trace
                     symbol_list = [(classes[curr], curr_trace)] + symbol_list
                     curr = prev
                 # now symbol_list has been built so print it
                 inkml.print_it(outdir, self.grammar, symbol_list)
-
