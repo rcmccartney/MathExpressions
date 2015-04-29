@@ -70,6 +70,19 @@ class Classifier():
         self.print_confusion(self.train_target, out)
 
     '''This limits evaluated sets to be length 5 or fewer, for the interests of executtion time'''
+    '''def eval(self, feature_set, num_traces):
+        # the model is stored in a tuple along with its name
+        model_temp = self.classifiers[0][2]
+        outprob = model_temp.predict_proba(feature_set)
+        max_prob = -1
+        max_class = ""
+        model_class_list = model_temp.classes_
+        for i in range(len(outprob[0])):  # outprob returns list
+            if outprob[0][i] > max_prob:
+                max_prob = outprob[0][i]
+                max_class = model_class_list[i]
+        return max_class, math.log(max_prob)*num_traces'''
+        
     def eval(self, feature_set, num_traces):
         # the model is stored in a tuple along with its name
         model_temp = self.classifiers[0][2]
@@ -81,7 +94,13 @@ class Classifier():
             if outprob[0][i] > max_prob:
                 max_prob = outprob[0][i]
                 max_class = model_class_list[i]
-        return max_class, math.log(max_prob)*num_traces
+                
+        #added as a test - favor combined symbols over high-matching single traces
+        if max_prob > 0.85:
+            prob = math.log(max_prob*100*num_traces)*num_traces
+        else:
+            prob = math.log(max_prob)*num_traces
+        return max_class, prob #math.log(max_prob)*num_traces
         
     def test_classifiers(self, test_data, test_targ=None, inkml=None):
         """
