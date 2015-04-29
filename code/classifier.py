@@ -58,7 +58,7 @@ class Classifier():
         filename = os.path.join(self.param_dir, shorthand + ".pkl")
         if shorthand == "1nn":
             with open(filename, 'wb') as f:
-                pickle.dump(model, f, pickle.HIGHEST_PROTOCOL)
+                pickle.dump(model, f, pickle.DEFAULT_PROTOCOL)
         else:
             with open(filename, 'wb') as f:
                 pickle.dump(model, f)

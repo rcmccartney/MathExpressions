@@ -2,7 +2,8 @@ __author__ = 'mccar_000'
 
 import math
 import random
-
+import numpy as np
+from scipy.stats import entropy
 
 class AtrocityEntropyFn():
     """
@@ -45,7 +46,9 @@ class AtrocityEntropyFn():
                 row = random.randint(0, len(samples)-1)
                 # store the value of the random sample for this attribute
                 splits.append(samples[row][attr_index])
-            attr_dict[attr_index] = sorted(splits)  # this will overwrite the attr_index if chosen more than once
+            # this will not overwrite the attr_index if chosen more than once
+            if attr_index in attr_dict:
+                attr_dict[attr_index] = sorted(attr_dict[attr_index] + splits)
             # repeat for the chosen attributes
         return attr_dict
 
@@ -55,11 +58,10 @@ class AtrocityEntropyFn():
         Get the counts of the two classes of the samples
         :return: tot count vector
         """
-        tot = [0, 0]
+        tot = np.zeros(1, len(samples[0][-1]))
         for row in samples:
-            tot[0] += row[-1][0]  # row[-1] is a boolean vector for the two classes
-            tot[1] += row[-1][1]
-        return tot
+            tot += row[-1]  # row[-1] is a boolean vector for the two classes
+        return tot.tolist()
 
     @staticmethod
     def calc_distr(samples):
@@ -69,11 +71,8 @@ class AtrocityEntropyFn():
         :param samples: data to calc distribution over
         :return: calculated distribution
         """
-        tot = [0 for _ in range(len(samples[0][-1]))]
         tot_elem = len(samples)
-        for row in samples:
-            for i in range(len(tot)):  # tot is a zero vector for each class
-                tot[i] += row[-1][i]  # row[-1] is a boolean vector for class
+        tot = AtrocityEntropyFn.get_class_counts(samples)
         return [float(count)/tot_elem for count in tot]  # this give prob dist for samples
 
     @staticmethod
@@ -112,28 +111,25 @@ class AtrocityEntropyFn():
         return entrop
 
     @staticmethod
-    def entropy_split(l1, l2, r1, r2):
+    def entropy_split(l, r):
         """
         More efficient entropy calculation, uses the updated counts of left and right classes to
         calculate entropy without iterating through the dataset
-        :param l1: number of class 0 instances in left data
-        :param l2: number of class 1 instances in left data
-        :param r1: number of class 0 instances in right data
-        :param r2: number of class 1 instances in right data
+        :param l: class counts of left data
+        :param r: class counts of right data
         :return: entropy score
         """
-        totsum = 0.0
-        if l1 != 0:
-            totsum += -l1*math.log(l1/(l1+l2))
-        if l2 != 0:
-            totsum += -l2*math.log(l2/(l1+l2))
-        if r1 != 0:
-            totsum += -r1*math.log(r1/(r1+r2))
-        if r2 != 0:
-            totsum += -r2*math.log(r2/(r1+r2))
-        if l1+l2+r1+r2 != 0:
-            totsum /= l1+l2+r1+r2
-        return totsum
+        num_l = sum(l)
+        num_r = sum(r)
+        if num_l == 0:
+            el = 0
+        else:
+            el = entropy(l)
+        if num_r == 0:
+            er = 0
+        else:
+            er = entropy(r)
+        return (num_l*el + num_r*er) / (num_l + num_r)
 
     def calc_split(self, samples):
         min_ent = float('NaN')
@@ -149,7 +145,7 @@ class AtrocityEntropyFn():
         for attrIndex, split_pts in attr_dict.items():
             r_count = counts[:]  # copy the starting counts
             right_data = sorted(samples, key=lambda l: l[attrIndex])  # now its sorted by the current attr
-            l_count = [0, 0]  # all the data starts in the right
+            l_count = [0]*len(samples[0][-1])  # all the data starts in the right
             left_data = []
             for split in split_pts:  # we know the splits are sorted in ascending order
                 if not right_data:  # right ran out of data before this iteration, stop calculating entropy of splits
@@ -161,7 +157,7 @@ class AtrocityEntropyFn():
                     self.adjust_counts(l_count, r_count, row[-1])
                     if not right_data:  # just ran out of samples
                         break
-                curr_ent = self.entropy_split(l_count[0], l_count[1], r_count[0], r_count[1])
+                curr_ent = self.entropy_split(l_count, r_count)
                 assert curr_ent >= 0, "Entropy cannot be negative"
                 if math.isnan(min_ent) or curr_ent < min_ent:  # Min entropy for this data is MAX Inform Gain
                     min_ent = curr_ent
@@ -169,12 +165,12 @@ class AtrocityEntropyFn():
                     bestattr = attrIndex
                     finaldata_l = left_data[:]
                     finaldata_r = right_data[:]
-                    tot = l_count[0] + l_count[1]
+                    tot = sum(l_count)
                     if tot != 0:
                         finaldist_l = [x/tot for x in l_count]
                     else:
                         finaldist_l = None
-                    tot = r_count[0] + r_count[1]
+                    tot = sum(r_count)
                     if tot != 0:
                         finaldist_r = [x/tot for x in r_count]
                     else:

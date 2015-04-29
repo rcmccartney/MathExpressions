@@ -89,7 +89,7 @@ def main():
         s = unpickle(default_lg_out, "split.pkl")
         xgrid_train, ytclass_train, inkmat_train = unpickle(default_lg_out, "train_feat.pkl")
         c = Classifier(param_dir=default_model_out, train_data=xgrid_train, train_targ=ytclass_train, model=model,
-                       inkml=inkmat_train, grammar=g.grammar_inv, outdir=default_lg_out)
+                       inkml=inkmat_train, grammar=g.grammar_inv, outdir=os.path.join(default_lg_out, "classifier"))
         # Can test the classifer on the held out data
         if not segment and s.split_percent < 1:
             assert isFile(default_lg_out, "test_feat.pkl"), \
@@ -104,7 +104,7 @@ def main():
             "You must have performed feature extraction on held out data before testing the classifier"
         xgrid_test, ytclass_test, inkmat_test = unpickle(default_lg_out, "test_feat.pkl")
         c = Classifier(param_dir=default_model_out, testing=True, grammar=g.grammar_inv,
-                       outdir=default_lg_out, model=model)
+                       outdir=os.path.join(default_lg_out, "classifier"), model=model)
         c.test_classifiers(xgrid_test, test_targ=ytclass_test, inkml=inkmat_test)
 
     # STEP 4 - SEGMENTATION
@@ -123,21 +123,19 @@ def main():
             seg = Segmenter(grammar=g.grammar_inv)
             # USING A RANDOM SAMPLE TO TRAIN / TEST SEGMENTER
             seg.segment_inkml_files(random.sample(s.train, 200), f, c)
-            '''seg.segment_inkml_files(s.train, f, c)'''
-            seg.backtrack_and_print(os.path.join(default_lg_out, "train", model.replace(".pkl", "")))
+            seg.backtrack_and_print(os.path.join(default_lg_out, "train", "segment", model.replace(".pkl", "")))
             if s.split_percent < 1:
                 seg.segment_inkml_files(random.sample(s.test, 200), f, c)
-                '''seg.segment_inkml_files(s.test, f, c)'''
-                seg.backtrack_and_print(os.path.join(default_lg_out, "test", model.replace(".pkl", "")))
+                seg.backtrack_and_print(os.path.join(default_lg_out, "test", "segment", model.replace(".pkl", "")))
         else:
-            print("\n# Segmenting on test data #")
+            print("\n# Segmenting on unseen test data #")
             assert isFile(default_lg_out, "parsed_test.pkl"), "You must have parsed testing data to segment"
             p = unpickle(default_lg_out, "parsed_test.pkl")
             c = Classifier(param_dir=default_model_out, testing=True, grammar=g.grammar_inv,
                            outdir=default_lg_out, model=model)
             seg = Segmenter(grammar=g.grammar_inv)
             seg.segment_inkml_files(p.parsed_inkml, f, c)
-            seg.backtrack_and_print(os.path.join(default_lg_out, "test", model.replace(".pkl", "")))
+            seg.backtrack_and_print(os.path.join(default_lg_out, "test", "segment", model.replace(".pkl", "")))
 
 
 if __name__ == '__main__':
