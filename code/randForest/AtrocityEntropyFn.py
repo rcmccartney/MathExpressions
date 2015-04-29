@@ -87,6 +87,7 @@ class AtrocityEntropyFn():
         :param class_v: the class vector for the data item getting moved
         :return: None
         """
+        print(left, right, class_v)
         for i in range(len(class_v)):
             left[i] += class_v[i]
             right[i] -= class_v[i]

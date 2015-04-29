@@ -50,8 +50,6 @@ class Forest(object):
         :return: None
         """
         y = np.asarray(y)
-        minclass = np.amin(y)
-        maxclass = np.amax(y)
         # append a class decision vector such as [0, 1, 0, 0] (here is a 4 class problem) to row of data
         l = np.arange(y.size)
         out = np.zeros((y.size, self.numclasses))
@@ -60,6 +58,8 @@ class Forest(object):
         x = x.tolist()
         for row in range(len(x)):
             x[row].append(out[row])
+        print(len(x[0]), y.size)
+        print(x[19][-1])
         self.data = x
         self.add_tree(iterations=self.default_tree_count)
         self.data = None
