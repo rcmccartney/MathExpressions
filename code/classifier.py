@@ -40,9 +40,9 @@ class Classifier():
         #                        algorithm="SAMME", n_estimators=200))
         #self.train_classifier("Random Forest", "rf", RandomForestClassifier(n_estimators=50, max_depth=18, n_jobs=-1))
         #self.train_classifier("SVM w/ RBF kernel", "rbf_svm", svm.SVC(kernel='rbf'))
-        self.train_classifier("Random Forest", "rf", Forest(weak_learner=AtrocityEntropyFn(k=100, attr=50),
+        self.train_classifier("Random Forest", "rf", Forest(weak_learner=AtrocityEntropyFn(k=50, attr=25),
                                                             numclasses=len(self.grammar),
-                                                            default_tree_count=200))
+                                                            default_tree_count=50))
 
 
     def make_lg(self, output, inkml, dirname):

@@ -1,20 +1,18 @@
 __author__ = 'Robert McCartney'
 
 from code.randForest.tree import *
-import math
 import random
-import pickle
 import numpy as np
-from multiprocessing.pool import Pool
+import multiprocessing as mp
+import copy
 
 
-def make_tree(tree_data):
+def make_tree(q, data, depthlimit, num_per, weak_learner):
     """
     Use this function to make a tree in parallel using all cores of the machine
-    :param tree_data: Tuple of (self.data_copy(), self.bag, self.bag_ratio, self.depthlimit, self.weak_learner)
-    :return: Tree made by this thread
     """
-    return Tree(tree_data[0], tree_data[1], tree_data[2])
+    for _ in range(num_per):
+        q.put(Tree(data, depthlimit, weak_learner))
 
 
 class Forest(object):
@@ -45,8 +43,6 @@ class Forest(object):
         Train the forest without saving the data
         :param x: data to use, already processed into 2D numpy array
         :param y: output values, a 1D numpy array of ints
-        :param classes: list of the class decision for each row in instances
-        :param numclass: number of classes in this dataset
         :return: None
         """
         y = np.asarray(y)
@@ -75,12 +71,23 @@ class Forest(object):
         #########################
         # MULTI THREADED
         ########################
+        """
         pool = Pool()  # creates multiple processes equal to cores in machine
         outputs = pool.map(make_tree, [(self.data_copy(), self.depthlimit, self.weak_learner)
                                        for _ in range(iterations)])
         pool.close()
         pool.join()
-        self.trees.extend(outputs)  # get the trees created and store them
+        """
+        q = mp.Queue()
+        processes = mp.cpu_count()
+        num_per = int(iterations/processes)
+        all_p = [mp.Process(target=make_tree, args=(q, self.data_copy(),
+                                                    copy.copy(self.depthlimit), num_per,
+                                                    copy.deepcopy(self.weak_learner))) for _ in range(processes)]
+        for p in all_p:
+            p.daemon = True
+            p.start()
+        self.trees.extend([q.get() for _ in all_p])  # get the trees created and store them
 
     def data_copy(self):
         """
@@ -95,7 +102,7 @@ class Forest(object):
     def predict_proba(self, test_data):
         """
         Averages the distribution of every tree in the forest to calc final distribution
-        :param instance: that you want to classify using this forest
+        :param test_data: that you want to classify using this forest
         :return: distribution of class decisions, representing a confidence percentage
         """
         # use a simple average to combine distributions
