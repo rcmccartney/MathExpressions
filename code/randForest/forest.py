@@ -107,15 +107,12 @@ class Forest(object):
                 tree_distr = tree.get_instance_distr(instance)
                 for i in range(len(distr)):
                     distr[i] += tree_distr[i]
-            totals += [prob/tot_trees for prob in distr]  # this gives avg prob dist for trees
+            totals.append([prob/tot_trees for prob in distr])  # this gives avg prob dist for trees
         return totals
 
     def predict(self, test_data):
         totals = self.predict_proba(test_data)
-        results = []
-        for row in totals:
-            results.append(max(row))
-        return results
+        return np.asarray(totals).argmax(axis=1).tolist()
 
     def __str__(self):
         """

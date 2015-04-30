@@ -2,7 +2,7 @@ import numpy as np
 import math
 
 
-def get_rowwise_crosses_maxmin(image_mat, numregions, verbose):
+def get_rowwise_crosses_maxmin(image_mat, numregions):
     numrows, numcols = image_mat.shape
     
     rowwidth = int(math.floor(numrows/numregions))
@@ -34,7 +34,7 @@ def get_rowwise_crosses_maxmin(image_mat, numregions, verbose):
     featurelist = avelist + mincrosslist + maxcrosslist
     return featurelist
         
-def get_all_crosses_maxmin(image_mat, numregions, verbose):
+def get_all_crosses_maxmin(image_mat, numregions):
     rowwise = get_rowwise_crosses_maxmin(image_mat,numregions,False)
     colwise = get_rowwise_crosses_maxmin(image_mat.transpose(),numregions,False)
     totalfeatures = rowwise + colwise

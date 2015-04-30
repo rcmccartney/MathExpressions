@@ -98,7 +98,7 @@ class Split():
         return new_train, new_test
 
     def print_grammar(self):
-        """ prints the grammar being used for verbose mode """
+        """ prints the grammar being used """
         print("[ ", end="")
         gr = sorted(self.grammar, key=self.grammar.get)
         for i in range(len(self.grammar)):
