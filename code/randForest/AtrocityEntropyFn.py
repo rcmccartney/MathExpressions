@@ -46,9 +46,8 @@ class AtrocityEntropyFn():
                 row = random.randint(0, len(samples)-1)
                 # store the value of the random sample for this attribute
                 splits.append(samples[row][attr_index])
-            # this will not overwrite the attr_index if chosen more than once
-            if attr_index in attr_dict:
-                attr_dict[attr_index] = sorted(attr_dict[attr_index] + splits)
+            # this will overwrite the attr_index if chosen more than once
+            attr_dict[attr_index] = sorted(splits)
             # repeat for the chosen attributes
         return attr_dict
 
@@ -58,11 +57,10 @@ class AtrocityEntropyFn():
         Get the counts of the two classes of the samples
         :return: tot count vector
         """
-        print(samples[0][-1])
-        tot = np.zeros(1, len(samples[0][-1]))
+        tot = np.zeros((1, len(samples[0][-1])))
         for row in samples:
             tot += row[-1]  # row[-1] is a boolean vector for the two classes
-        return tot.tolist()
+        return tot.tolist()[0]
 
     @staticmethod
     def calc_distr(samples):
@@ -87,7 +85,6 @@ class AtrocityEntropyFn():
         :param class_v: the class vector for the data item getting moved
         :return: None
         """
-        print(left, right, class_v)
         for i in range(len(class_v)):
             left[i] += class_v[i]
             right[i] -= class_v[i]

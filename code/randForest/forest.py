@@ -110,6 +110,13 @@ class Forest(object):
             totals += [prob/tot_trees for prob in distr]  # this gives avg prob dist for trees
         return totals
 
+    def predict(self, test_data):
+        totals = self.predict_proba(test_data)
+        results = []
+        for row in totals:
+            results.append(max(row))
+        return results
+
     def __str__(self):
         """
         :return: string representation of this forest
