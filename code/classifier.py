@@ -38,11 +38,11 @@ class Classifier():
         #self.train_classifier("1-nn", "1nn", KnnClassifier(k=1))
         #self.train_classifier("AdaBoost", "bdt",  AdaBoostClassifier(DecisionTreeClassifier(max_depth=8),
         #                        algorithm="SAMME", n_estimators=200))
-        #self.train_classifier("Random Forest", "rf", RandomForestClassifier(n_estimators=50, max_depth=18, n_jobs=-1))
+        self.train_classifier("Random Forest", "rf", RandomForestClassifier(n_estimators=50, max_depth=18, n_jobs=-1))
         #self.train_classifier("SVM w/ RBF kernel", "rbf_svm", svm.SVC(kernel='rbf'))
-        self.train_classifier("Random Forest", "rf", Forest(weak_learner=AtrocityEntropyFn(k=50, attr=25),
+        '''self.train_classifier("Random Forest", "rf", Forest(weak_learner=AtrocityEntropyFn(k=50, attr=25),
                                                             numclasses=len(self.grammar),
-                                                            default_tree_count=50))
+                                                            default_tree_count=50))'''
 
 
     def make_lg(self, output, inkml, dirname):
