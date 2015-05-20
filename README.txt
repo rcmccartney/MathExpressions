@@ -1,7 +1,3 @@
-Extracting the program:
-1. Unzip program.zip
-2. tar -xvzf program.tgz
-
 Running the program:
 $ python3 execute.py [flag] [arguments]
 
@@ -49,3 +45,10 @@ of parsing then segmentation with two separate execution calls.
 A trained classifier and trained feature extractor are required 
 to perform testing or you will receive an assertion error.
 
+OUTPUT:
+
+All pickled data will appear in the outdir specified above on the command line, or 
+defaulted to .\output.  Inside output, the .lg results for classification (segmentation given)
+will appear in a 'classifier' subfolder, while results for segmentation will appear in a 
+'segment' subfolder.  Inside each subfolder the results are broken down into directories
+by training and test set, as well as by classification model used.
