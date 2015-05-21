@@ -127,8 +127,7 @@ class Equationparser():
         secrelation, secneighbor = self.is_above_below_inside(minsymbol, symbolList)
         if secrelation is not None:
             minsymbol = secneighbor
-        print(minsymbol.labelXML)
-        
+
         for symbol in symbolList:
             if symbol is not minsymbol:
                 #if a is to the right, super, or sub

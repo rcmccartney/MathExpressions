@@ -6,13 +6,14 @@ def print_usage():
     """ Prints correct usage of the program and exits """
     print("$ python3 execute.py [flag] [arguments]")
     print("flags:")
-    print("  -p                  : perform parsing and save to file")
+    print("  -c                  : perform conversion of inkml files into objects for follow-on manipulation")
     print("  -s <percent>        : perform splitting on <percent>% of data in (% in range [0,1]) and save to file")
     print("  -e                  : perform feature extraction and save to file")
     print("  -tc                 : train the classifier with the data passed in, set segment to 1.0 to use all data")
     print("  -test               : perform a complete test with unseen data")
     print("      Options: -seg flag set will test segmentation, otherwise will test only classification")
     print("  -seg                : perform segmentation (will use either training or testing data)")
+    print("  -p                  : perform parsing of the equation into symbol tree")
     print("  -m  [name]          : specify model to use (inside models dir)")
     print("      Options: '1nn.pkl' - 1-nearest neighbor")
     print("               'rf.pkl' - random forest (default)")
@@ -53,11 +54,11 @@ def parse_cl(args):
     # ask for help
     if "-h" in args:
         print_usage()
-    # parsing setting
-    if "-p" in args:
-        args.remove("-p")
-        parsing = True
-        print("-p : parsing input files")
+    # converting setting
+    if "-c" in args:
+        args.remove("-c")
+        conversion = True
+        print("-c : converting inkml files")
     # extraction setting
     if "-e" in args:
         args.remove("-e")
@@ -90,6 +91,11 @@ def parse_cl(args):
             print("-test, seg : testing the segmentation")
         else:
             print("-test, !seg : testing the classifier only")
+    # parsing setting
+    if "-p" in args:
+        args.remove("-p")
+        parsing = True
+        print("-p : parsing expressions")
     # model setting
     if "-m" in args:
         index = args.index("-m")
@@ -135,6 +141,6 @@ def parse_cl(args):
             for line in f:
                 filelist.append(os.path.join(path, os.path.normcase(line.strip())))
 
-    return (parsing, splitting, extraction, training, testing,
+    return (conversion, parsing, splitting, extraction, training, testing,
             train_percent, segment, model, filelist, default_model_out,
             default_lg_out, grammar_file)

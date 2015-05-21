@@ -34,16 +34,16 @@ def main():
     """
     This is the pipeline of the system
     """
-    parsing, splitting, extraction, training, testing, \
+    conversion, parsing, splitting, extraction, training, testing, \
         train_percent, segment, model, filelist, default_model_out,\
         default_lg_out, grammar_file = parse_cl(sys.argv)
 
     # get the output classes we will use
     g = Grammar(grammar_file)
 
-    # STEP 1 - PARSING
-    if parsing:
-        print("\n# Parsing input data #")
+    # STEP 1 - CONVERTING INKML FILES
+    if conversion:
+        print("\n# Converting input inkml files #")
         p = Parser()
         p.parse(filelist, g.grammar)
         print("Parsed", len(p.parsed_inkml), "InkML files")
@@ -62,19 +62,6 @@ def main():
             s.optimize_kl()
         pickle_array(s, default_lg_out, "split.pkl")
 
-    ###########TEMP TEMP TEMP####################
-    #perform the equation parse on known segmentation
-    print("\n# Parsing Equation #")
-    assert isFile(default_lg_out, "split.pkl"), "You must have split"
-    par = Equationparser()
-    for inkmlfile in s.train:
-        res = par.parse_equation(inkmlfile.symbol_list)
-        print(inkmlfile.fname)
-        for r in res:
-            print(r)
-        print("\n\n")
-    
-        
     # STEP 3 - EXTRACTION
     if extraction and not testing:
         print("\n# Running feature extraction for training data #")
@@ -151,6 +138,23 @@ def main():
             seg = Segmenter(grammar=g.grammar_inv)
             seg.segment_inkml_files(p.parsed_inkml, f, c)
             seg.backtrack_and_print(os.path.join(default_lg_out, "test", "segment", model.replace(".pkl", "")))
+
+    # STEP 5 - PARSING
+    if parsing:
+        #perform the equation parse on known segmentation
+        print("\n# Parsing Equations from ground truth classification and segmentation #")
+        assert isFile(default_lg_out, "parsed_train.pkl"), "You must have converted data to parse"
+        data = unpickle(default_lg_out, "parsed_train.pkl")
+        par = Equationparser()
+        for inkmlfile in data.parsed_inkml:
+            res = par.parse_equation(inkmlfile.symbol_list)
+            print(inkmlfile.fname)
+            for r in res:
+                print(r)
+            print("\n\n")
+
+
+
 
 
 if __name__ == '__main__':
