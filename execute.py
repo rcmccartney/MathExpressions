@@ -7,6 +7,8 @@ from code.features import *
 from code.classifier import *
 from code.parse import *
 from code.segmentation import *
+
+from code.equationparser import *
 #from profilehooks17.profilehooks import *
 
 
@@ -60,6 +62,19 @@ def main():
             s.optimize_kl()
         pickle_array(s, default_lg_out, "split.pkl")
 
+    ###########TEMP TEMP TEMP####################
+    #perform the equation parse on known segmentation
+    print("\n# Parsing Equation #")
+    assert isFile(default_lg_out, "split.pkl"), "You must have split"
+    par = Equationparser()
+    for inkmlfile in s.train:
+        res = par.parse_equation(inkmlfile.symbol_list)
+        print(inkmlfile.fname)
+        for r in res:
+            print(r)
+        print("\n\n")
+    
+        
     # STEP 3 - EXTRACTION
     if extraction and not testing:
         print("\n# Running feature extraction for training data #")

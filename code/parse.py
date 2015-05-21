@@ -33,7 +33,15 @@ class Symbol():
         self.label_index = label_index
         self.trace_list = trace_list
         self.num_in_inkml = num_in_inkml
-
+        
+        x, y = self.get_all_points()
+        self.minx = min(x)
+        self.maxx = max(x)
+        self.centerx = min(x) + (max(x) - min(x))/2
+        self.miny = min(y)
+        self.maxy = max(y)
+        self.centery = min(y) + (max(y) - min(y))/2
+        
     def get_all_points(self):
         xtemp = []
         ytemp = []
