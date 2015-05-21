@@ -27,9 +27,9 @@ class Equationparser():
         xdiff = symbol.centerx - closestsymbol.centerx + 0.0001
         ydiff = symbol.centery - closestsymbol.centery
         angle = math.atan(ydiff/xdiff)
-        if angle < -(self.anglethresh*3.14/180) and symbol.maxy > closestsymbol.miny and symbol.maxy < closestsymbol.maxy:
+        if angle < -(self.anglethresh*3.14/180) and symbol.miny < closestsymbol.miny and symbol.maxy < closestsymbol.maxy:
             return "sup", closestsymbol
-        elif angle > (self.anglethresh*3.14/180) and symbol.miny > closestsymbol.miny and symbol.miny < closestsymbol.maxy:
+        elif angle > (self.anglethresh*3.14/180) and symbol.miny > closestsymbol.miny and symbol.maxy > closestsymbol.maxy:
             if symbol.label == ",":
                 return "right", closestsymbol
             else:
@@ -72,22 +72,22 @@ class Equationparser():
             if neighbor.labelXML != symbol.labelXML:
                 if symbol.centerx > neighbor.minx and symbol.centerx < neighbor.maxx:
                     if symbol.centery > neighbor.miny and symbol.centery < neighbor.maxy:
-                        tempdist = dist(symbol, neighbor)
+                        tempdist = self.dist(symbol, neighbor)
                         if tempdist < mindist:
                             mindist = tempdist
                             closestsymbol = neighbor
                             closestrelation = "inside"
         for neighbor in symbolList:
-            if neighbor.label == "-" or neighbor.label == "\sum" or neighbor.label == "\pi":
-                if (symbol.maxx > neigbor.minx and symbol.maxx < neighbor.maxx):
+            if neighbor.label == "-" or neighbor.label == "\sum" or neighbor.label == "\pi" or neighbor.label == "\lim":
+                if (symbol.maxx > neighbor.minx and symbol.maxx < neighbor.maxx):
                     if symbol.miny > neighbor.maxy:
-                        tempdist = dist(symbol, neighbor)
+                        tempdist = self.dist(symbol, neighbor)
                         if tempdist < mindist:
                             mindist = tempdist
                             closestsymbol = neighbor
                             closestrelation = "below"
                     if (0.8*symbol.maxy + 0.2*symbol.centery) < neighbor.miny: #allow for dangling strokes in g, j, p, q, y
-                        tempdist = dist(symbol, neighbor)
+                        tempdist = self.dist(symbol, neighbor)
                         if tempdist < mindist:
                             mindist = tempdist
                             closestsymbol = neighbor
@@ -122,10 +122,13 @@ class Equationparser():
             if symbol.minx < minxcoord:
                 minxcoord = symbol.minx
                 minsymbol = symbol
+                
+        
         secrelation, secneighbor = self.is_above_below_inside(minsymbol, symbolList)
         if secrelation is not None:
             minsymbol = secneighbor
-            
+        print(minsymbol.labelXML)
+        
         for symbol in symbolList:
             if symbol is not minsymbol:
                 #if a is to the right, super, or sub
