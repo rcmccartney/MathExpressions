@@ -85,6 +85,27 @@ class InkmlFile():
         base = os.path.basename(fname)
         return os.path.splitext(base)[0]
 
+    def print_gt(self, directory, relations):
+        """ this prints the ground truth classification and segmentation with our relations """
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        with open(os.path.join(directory, self.fname + ".lg"), "w") as f:
+            f.write("# " + self.label + " (Object format)\n")
+            f.write("# " + str(len(self.symbol_list)) + " objects (symbols)\n")
+            f.write("# FORMAT:\n")
+            f.write("# O, Object ID, Label, Weight, List of Primitive IDs (strokes in a symbol)\n")
+            for i in range(len(self.symbol_list)):
+                strokes = ""
+                for trace in self.symbol_list[i].trace_list:
+                    strokes += str(trace.id) + ", "
+                strokes = strokes[:-2]  # cut off the last comma
+                f.write("O, " + self.symbol_list[i].labelXML + ", " + self.symbol_list[i].label +
+                        ", 1.0, " + strokes + "\n")
+            # now the relations
+            f.write("# Relations from SRT:\n")
+            for line in relations:
+                f.write("EO, " + line[0] + ", " + line[1] + ", " + line[2] + ", 1.0\n")
+
     def print_it(self, directory, grammar_inv, symbol_list=None):
         if not os.path.exists(directory):
             os.makedirs(directory)

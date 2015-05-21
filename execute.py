@@ -148,13 +148,7 @@ def main():
         par = Equationparser()
         for inkmlfile in data.parsed_inkml:
             res = par.parse_equation(inkmlfile.symbol_list)
-            print(inkmlfile.fname)
-            for r in res:
-                print(r)
-            print("\n\n")
-
-
-
+            inkmlfile.print_gt(os.path.join(default_lg_out, "parse_gt"), res)
 
 
 if __name__ == '__main__':

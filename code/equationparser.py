@@ -28,39 +28,39 @@ class Equationparser():
         ydiff = symbol.centery - closestsymbol.centery
         angle = math.atan(ydiff/xdiff)
         if angle < -(self.anglethresh*3.14/180) and symbol.miny < closestsymbol.miny and symbol.maxy < closestsymbol.maxy:
-            return "sup", closestsymbol
+            return "Sup", closestsymbol
         elif angle > (self.anglethresh*3.14/180) and symbol.miny > closestsymbol.miny and symbol.maxy > closestsymbol.maxy:
             if symbol.label == ",":
-                return "right", closestsymbol
+                return "Right", closestsymbol
             else:
-                return "sub", closestsymbol
+                return "Sub", closestsymbol
         else:
-            return "right", closestsymbol
+            return "Right", closestsymbol
             
-        '''
+        """
         H = (closestsymbol.maxy-closestsymbol.miny)/(symbol.maxy-symbol.miny + 0.0001)
         D = (closestsymbol.centery - symbol.centery)/(closestsymbol.maxy - closestsymbol.miny + 0.0001)
         
         if symbol.miny < closestsymbol.miny and symbol.maxy > closestsymbol.miny and symbol.maxy < (closestsymbol.centery+(closestsymbol.maxy-closestsymbol.centery)/2):
             return "sup", closestsymbol
         elif symbol.maxy > closestsymbol.maxy and symbol.miny < closestsymbol.miny and symbol.miny > (closestsymbol.centery - (closestsymbol.centery-closestsymbol.miny)/2):
-            if symbol.label == ",": #special case COMMA is right
-                return "right", closestsymbol
+            if symbol.label == ",": #special case COMMA is Right
+                return "Right", closestsymbol
             else:
                 return "sub", closestsymbol
         else:
-            return "right", closestsymbol
-        '''
+            return "Right", closestsymbol
+        """
         
     def is_above_below_inside_single(self, symbol, neighbor):
         if symbol.centerx > neighbor.minx and symbol.centerx < neighbor.maxx:
             if symbol.centery > neighbor.miny and symbol.centery < neighbor.maxy:
-                return "inside", neighbor #symbol is inside neighbor
+                return "Inside", neighbor #symbol is inside neighbor
             else:
                 if symbol.miny > neighbor.maxy:
-                    return "below", neighbor #symbol is below neighbor
+                    return "Below", neighbor #symbol is below neighbor
                 if symbol.maxy < neighbor.miny:
-                    return "above", neighbor #symbol is above neighbor
+                    return "Above", neighbor #symbol is above neighbor
         return None, None
         
     def is_above_below_inside(self, symbol, symbolList):
@@ -76,7 +76,7 @@ class Equationparser():
                         if tempdist < mindist:
                             mindist = tempdist
                             closestsymbol = neighbor
-                            closestrelation = "inside"
+                            closestrelation = "Inside"
         for neighbor in symbolList:
             if neighbor.label == "-" or neighbor.label == "\sum" or neighbor.label == "\pi" or neighbor.label == "\lim":
                 if (symbol.maxx > neighbor.minx and symbol.maxx < neighbor.maxx):
@@ -85,13 +85,13 @@ class Equationparser():
                         if tempdist < mindist:
                             mindist = tempdist
                             closestsymbol = neighbor
-                            closestrelation = "below"
+                            closestrelation = "Below"
                     if (0.8*symbol.maxy + 0.2*symbol.centery) < neighbor.miny: #allow for dangling strokes in g, j, p, q, y
                         tempdist = self.dist(symbol, neighbor)
                         if tempdist < mindist:
                             mindist = tempdist
                             closestsymbol = neighbor
-                            closestrelation = "above"
+                            closestrelation = "Above"
         return closestrelation, closestsymbol
     
     '''

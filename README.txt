@@ -42,7 +42,7 @@ To run a trained model on unseen data for testing segmentation results from a di
 $ python3 execute.py -test -c -seg -d <dir>
 
 To run the trained model for parsing a tree with ground truth classification and segmentation:
-$ python3 execute.py -c -e -s 0.7 -tc -seg -d <dir>
+$ python3 execute.py -c -p -d <dir>
 
 *Note the pipeline can also be broken into separate steps 
 of parsing then segmentation with two separate execution calls.
