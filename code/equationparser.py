@@ -16,7 +16,7 @@ class Equationparser():
         closestsymbol = None
         mindist = float('inf')
         for neighbor in symbolList:
-            if neighbor.centerx < symbol.centerx:
+            if neighbor.centerx < symbol.centerx and neighbor.labelXML != symbol.labelXML:
                 tempdist = self.dist(neighbor, symbol)
                 if tempdist < mindist:
                     mindist = tempdist
@@ -33,22 +33,29 @@ class Equationparser():
             return "sup", closestsymbol
         else:
             return "right", closestsymbol'''
+            
+        H = (closestsymbol.maxy-closestsymbol.miny)/(symbol.maxy-symbol.miny + 0.0001)
+        D = (closestsymbol.centery - symbol.centery)/(closestsymbol.maxy - closestsymbol.miny + 0.0001)
+        
         if symbol.miny < closestsymbol.miny and symbol.maxy > closestsymbol.miny and symbol.maxy < (closestsymbol.centery+(closestsymbol.maxy-closestsymbol.centery)/2):
-            return "sub", closestsymbol
-        elif symbol.maxy > closestsymbol.maxy and symbol.miny < closestsymbol.miny and symbol.miny > (closestsymbol.centery - (closestsymbol.centery-closestsymbol.miny)/2):
             return "sup", closestsymbol
+        elif symbol.maxy > closestsymbol.maxy and symbol.miny < closestsymbol.miny and symbol.miny > (closestsymbol.centery - (closestsymbol.centery-closestsymbol.miny)/2):
+            if symbol.label == "COMMA": #special case COMMA is right
+                return "right", closestsymbol
+            else:
+                return "sub", closestsymbol
         else:
             return "right", closestsymbol
     
     def is_above_below_inside_single(self, symbol, neighbor):
         if symbol.centerx > neighbor.minx and symbol.centerx < neighbor.maxx:
             if symbol.centery > neighbor.miny and symbol.centery < neighbor.maxy:
-                return "inside", neighbor
+                return "inside", neighbor #symbol is inside neighbor
             else:
                 if symbol.miny > neighbor.maxy:
-                    return "above", neighbor
+                    return "below", neighbor #symbol is below neighbor
                 if symbol.maxy < neighbor.miny:
-                    return "below", neighbor
+                    return "above", neighbor #symbol is above neighbor
         return None, None
         
     def is_above_below_inside(self, symbol, symbolList):
@@ -65,10 +72,10 @@ class Equationparser():
                     else:
                         if symbol.miny > neighbor.maxy:
                             closestsymbol = neighbor
-                            closestrelation = "above"
+                            closestrelation = "below"
                         if symbol.maxy < neighbor.miny:
                             closestsymbol = neighbor
-                            closestrelation = "below"
+                            closestrelation = "above"
         return closestrelation, closestsymbol
         
     
@@ -104,4 +111,3 @@ class Equationparser():
                 if secrelation is not None:
                     relationlist.append([secneighbor.labelXML, symbol.labelXML, secrelation])
         return relationlist
-            
