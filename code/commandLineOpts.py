@@ -37,6 +37,7 @@ def parse_cl(args):
         print_usage()
 
     # set the defaults
+    conversion = False
     parsing = False
     extraction = False
     training = False
