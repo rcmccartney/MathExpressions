@@ -60,6 +60,7 @@ def main():
         s = Split(p.parsed_inkml, g.grammar, train_percent)
         if train_percent < 1:
             s.optimize_kl()
+        s.test = random.sample(s.test, 200)
         pickle_array(s, default_lg_out, "split.pkl")
 
     # STEP 3 - EXTRACTION
