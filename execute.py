@@ -115,11 +115,13 @@ def main():
         f = unpickle(default_lg_out, "features.pkl")
         # two cases - if this is training, use the split test data
         # otherwise, use parsed test data
+        inkml_to_parse = None
         if not testing:
             print("\n# Segmenting on training data #")
             assert isFile(default_lg_out, "split.pkl"), \
                 "You must have a splitter for training and testing of segmentation"
             s = unpickle(default_lg_out, "split.pkl")
+            inkml_to_parse = s.train
             c = Classifier(param_dir=default_model_out, testing=True, grammar=g.grammar_inv,
                            outdir=default_lg_out, model=model)
             seg = Segmenter(grammar=g.grammar_inv)
@@ -129,6 +131,7 @@ def main():
             if s.split_percent < 1:
                 seg.segment_inkml_files(random.sample(s.test, 200), f, c)
                 seg.backtrack_and_print(os.path.join(default_lg_out, "test", "segment", model.replace(".pkl", "")))
+                inkml_to_parse = s.test
         else:
             print("\n# Segmenting on unseen test data #")
             assert isFile(default_lg_out, "parsed_test.pkl"), "You must have parsed testing data to segment"
@@ -138,13 +141,14 @@ def main():
             seg = Segmenter(grammar=g.grammar_inv)
             seg.segment_inkml_files(p.parsed_inkml, f, c)
             seg.backtrack_and_print(os.path.join(default_lg_out, "test", "segment", model.replace(".pkl", "")))
+            inkml_to_parse = p.parsed_inkml
 
     # STEP 5 - PARSING
     if parsing and segment:
         print("\n# Parsing Equations from previous classification and segmentation steps #")
         par = Equationparser()
         # segmented symbols are the symbols that have been segmented and classified, not ground truth
-        for inkmlfile in p.parsed_inkml:
+        for inkmlfile in inkml_to_parse:
             res = par.parse_equation(inkmlfile.segmented_symbols)
             inkmlfile.print_gt(os.path.join(default_lg_out, "parse_all"), res, use_segmention=True)
     elif parsing:
@@ -152,15 +156,16 @@ def main():
         print("\n# Parsing Equations from ground truth classification and segmentation #")
         if testing:
             assert isFile(default_lg_out, "parsed_test.pkl"), "You must have converted test data to parse"
-            data = unpickle(default_lg_out, "parsed_test.pkl")
+            data = unpickle(default_lg_out, "parsed_test.pkl").parsed_inkml
         else:
             if not splitting:
                 assert isFile(default_lg_out, "parsed_train.pkl"), "You must have converted data to parse"
-                data = unpickle(default_lg_out, "parsed_train.pkl")
+                data = unpickle(default_lg_out, "parsed_train.pkl").parsed_inkml
             else:  # you already split the data, take the test set
                 data = unpickle(default_lg_out, "split.pkl").test
         par = Equationparser()
-        for inkmlfile in data.parsed_inkml:
+        for inkmlfile in data:
+            print("Parsing " + inkmlfile.fname)
             res = par.parse_equation(inkmlfile.symbol_list)
             inkmlfile.print_gt(os.path.join(default_lg_out, "parse_gt"), res)
 

@@ -47,13 +47,15 @@ $ python3 execute.py -c -e -s 0.7 -tc -seg -p -l <filelist>
 To then parse expressions from the test set:
 $ python3 execute.py -p -test
 
-### PART 3 COMMANDS ###
+########## PART 3 COMMANDS ##############
 
 To run the trained model for parsing a tree with ground truth classification and segmentation:
 $ python3 execute.py -test -c -p -d <dir>
 
 To run a trained model on unseen data for testing the entire pipeline (classification, segmentation, and parsing) from a directory*:
 $ python3 execute.py -test -c -seg -p -d <dir>
+
+##########################################
 
 *Note the pipeline can also be broken into separate steps 
 of parsing then segmentation with two separate execution calls.
