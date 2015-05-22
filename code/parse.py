@@ -59,7 +59,13 @@ class InkmlFile():
         self.fname = self.get_fname(fname)
         self.symbol_list = symbol_list
         self.class_decisions = [0]*len(symbol_list)
+        self.segmented_symbols = None
         self.relations = None
+        self.trace_map = {}
+        for symbol in self.symbol_list:
+            for trace in symbol.trace_list:
+                self.trace_map[trace.id] = trace
+
         # call the crohmeToLg tool in order to get the relationship info
         if auto_segment:
             try:
@@ -85,24 +91,29 @@ class InkmlFile():
         base = os.path.basename(fname)
         return os.path.splitext(base)[0]
 
-    def print_gt(self, directory, relations):
+    def print_gt(self, directory, relations, use_segmention=False):
         """ this prints the ground truth classification and segmentation with our relations """
+        if use_segmention:
+            symbol_list = self.segmented_symbols
+        else:
+            symbol_list = self.symbol_list
+
         if not os.path.exists(directory):
             os.makedirs(directory)
         with open(os.path.join(directory, self.fname + ".lg"), "w") as f:
             f.write("# " + self.label + " (Object format)\n")
-            f.write("# " + str(len(self.symbol_list)) + " objects (symbols)\n")
+            f.write("# " + str(len(symbol_list)) + " objects (symbols)\n")
             f.write("# FORMAT:\n")
             f.write("# O, Object ID, Label, Weight, List of Primitive IDs (strokes in a symbol)\n")
-            for i in range(len(self.symbol_list)):
+            for i in range(len(symbol_list)):
                 strokes = ""
-                for trace in self.symbol_list[i].trace_list:
+                for trace in symbol_list[i].trace_list:
                     strokes += str(trace.id) + ", "
                 strokes = strokes[:-2]  # cut off the last comma
-                f.write("O, " + self.symbol_list[i].labelXML + ", " + self.symbol_list[i].label +
+                f.write("O, " + symbol_list[i].labelXML + ", " + symbol_list[i].label +
                         ", 1.0, " + strokes + "\n")
             # now the relations
-            f.write("# Relations from SRT:\n")
+            f.write("\n# Relations from SRT:\n")
             for line in relations:
                 f.write("EO, " + line[0] + ", " + line[1] + ", " + line[2] + ", 1.0\n")
 
@@ -125,6 +136,9 @@ class InkmlFile():
                 if self.relations is not None:
                     f.write("\n" + self.relations)
             else:  # the model is responsible for segmentation here
+
+                self.segmented_symbols = []
+
                 labels = {}  # for the labels keep a hash of what you have seen before to number them
                 for i in range(len(symbol_list)):  # symbol_list is [(class, [traceIDs])]
                     class_decision = grammar_inv[symbol_list[i][0]]
@@ -135,10 +149,13 @@ class InkmlFile():
                         labels[class_decision] = 1
                         label = class_decision + "_1"
                     strokes = ""
+                    traces = []
                     for trace in symbol_list[i][1]:
+                        traces.append(self.trace_map[trace])
                         strokes += str(trace) + ", "
                     strokes = strokes[:-2]  # cut off the last comma
                     f.write("O, " + label + ", " + class_decision + ", 1.0, " + strokes + "\n")
+                    self.segmented_symbols.append(Symbol(0, label, class_decision, symbol_list[i][0], traces))
                 if self.relations is not None:
                     f.write("\n" + self.relations)
 

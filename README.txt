@@ -35,14 +35,25 @@ $ python3 execute.py -c -e -s 0.7 -tc -l <fileList>
 To train the classifier model and segment using <dir>:
 $ python3 execute.py -c -e -s 0.7 -tc -seg -d <dir>
 
-Then to run segmentation with this trained classifier on pre-segmented data:
+Then to run segmentation with this trained classifier on pre-converted data:
 $ python3 execute.py -seg
 
 To run a trained model on unseen data for testing segmentation results from a directory*:
 $ python3 execute.py -test -c -seg -d <dir>
 
+To train the classifier and then parse expressions from the training set:
+$ python3 execute.py -c -e -s 0.7 -tc -seg -p -l <filelist>
+
+To then parse expressions from the test set:
+$ python3 execute.py -p -test
+
+### PART 3 COMMANDS ###
+
 To run the trained model for parsing a tree with ground truth classification and segmentation:
-$ python3 execute.py -c -p -d <dir>
+$ python3 execute.py -test -c -p -d <dir>
+
+To run a trained model on unseen data for testing the entire pipeline (classification, segmentation, and parsing) from a directory*:
+$ python3 execute.py -test -c -seg -p -d <dir>
 
 *Note the pipeline can also be broken into separate steps 
 of parsing then segmentation with two separate execution calls.

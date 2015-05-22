@@ -100,7 +100,7 @@ def main():
             c.test_classifiers(xgrid_test, test_targ=ytclass_test, inkml=inkmat_test)
 
     # This is just for testing the classifier, no segmentation required
-    if testing and not segment:
+    if testing and not segment and not parsing:
         print("\n# Testing the classifier only #")
         assert isFile(default_lg_out, "test_feat.pkl"), \
             "You must have performed feature extraction on held out data before testing the classifier"
@@ -140,11 +140,25 @@ def main():
             seg.backtrack_and_print(os.path.join(default_lg_out, "test", "segment", model.replace(".pkl", "")))
 
     # STEP 5 - PARSING
-    if parsing:
+    if parsing and segment:
+        print("\n# Parsing Equations from previous classification and segmentation steps #")
+        par = Equationparser()
+        # segmented symbols are the symbols that have been segmented and classified, not ground truth
+        for inkmlfile in p.parsed_inkml:
+            res = par.parse_equation(inkmlfile.segmented_symbols)
+            inkmlfile.print_gt(os.path.join(default_lg_out, "parse_all"), res, use_segmention=True)
+    elif parsing:
         #perform the equation parse on known segmentation
         print("\n# Parsing Equations from ground truth classification and segmentation #")
-        assert isFile(default_lg_out, "parsed_train.pkl"), "You must have converted data to parse"
-        data = unpickle(default_lg_out, "parsed_train.pkl")
+        if testing:
+            assert isFile(default_lg_out, "parsed_test.pkl"), "You must have converted test data to parse"
+            data = unpickle(default_lg_out, "parsed_test.pkl")
+        else:
+            if not splitting:
+                assert isFile(default_lg_out, "parsed_train.pkl"), "You must have converted data to parse"
+                data = unpickle(default_lg_out, "parsed_train.pkl")
+            else:  # you already split the data, take the test set
+                data = unpickle(default_lg_out, "split.pkl").test
         par = Equationparser()
         for inkmlfile in data.parsed_inkml:
             res = par.parse_equation(inkmlfile.symbol_list)
