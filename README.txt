@@ -69,3 +69,6 @@ defaulted to .\output.  Inside output, the .lg results for classification (segme
 will appear in a 'classifier' subfolder, while results for segmentation will appear in a 
 'segment' subfolder.  Inside each subfolder the results are broken down into directories
 by training and test set, as well as by classification model used.
+
+For part 3 the output for the ground truth classes and segments goes into output/parse_gt.
+The output when doing the full pipeline (segmentation, classification, and parsing) goes to output/parse_all.

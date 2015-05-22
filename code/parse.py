@@ -155,7 +155,7 @@ class InkmlFile():
                         strokes += str(trace) + ", "
                     strokes = strokes[:-2]  # cut off the last comma
                     f.write("O, " + label + ", " + class_decision + ", 1.0, " + strokes + "\n")
-                    self.segmented_symbols.append(Symbol(0, label, class_decision, symbol_list[i][0], traces))
+                    self.segmented_symbols.append(Symbol(0, class_decision, label, symbol_list[i][0], traces))
                 if self.relations is not None:
                     f.write("\n" + self.relations)
 
@@ -203,7 +203,7 @@ class Parser():
         inkmlfilelist = []
 
         for filename in filelist:
-            print("parsing", filename)
+            print("converting", filename)
             num_in_inkml = 0
             with open(filename, 'r') as filexml:
                 tree = ET.parse(filexml)

@@ -149,6 +149,7 @@ def main():
         par = Equationparser()
         # segmented symbols are the symbols that have been segmented and classified, not ground truth
         for inkmlfile in inkml_to_parse:
+            print("Parsing " + inkmlfile.fname)
             res = par.parse_equation(inkmlfile.segmented_symbols)
             inkmlfile.print_gt(os.path.join(default_lg_out, "parse_all"), res, use_segmention=True)
     elif parsing:
